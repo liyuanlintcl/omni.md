@@ -97,7 +97,7 @@ function loaderExecArgs(): string[] {
  * We detect this by checking `process.execArgv` for tsx's `--import` loader
  * and reconstruct: `node <execArgv...> <script>`.
  */
-function resolveLatBin(): string {
+function resolveOmniBin(): string {
   const script = resolve(process.argv[1]);
 
   // Not a .ts file — compiled JS or a wrapper script, use as-is.
@@ -119,41 +119,41 @@ function resolveLatBin(): string {
 
 // ── Command style ───────────────────────────────────────────────────
 
-type LatCommandStyle = 'global' | 'local' | 'npx';
+type OmniCommandStyle = 'global' | 'local' | 'npx';
 
 /** Return the lat binary string for the given command style. */
-function latBinString(style: LatCommandStyle): string {
-  if (style === 'global') return 'lat';
-  if (style === 'npx') return 'npx lat.md@latest';
-  return resolveLatBin();
+function omniBinString(style: OmniCommandStyle): string {
+  if (style === 'global') return 'omni';
+  if (style === 'npx') return 'npx omni.md@latest';
+  return resolveOmniBin();
 }
 
 /** Return the MCP server command descriptor for the given command style. */
-function styledMcpCommand(style: LatCommandStyle): {
+function styledMcpCommand(style: OmniCommandStyle): {
   command: string;
   args: string[];
 } {
-  if (style === 'global') return { command: 'lat', args: ['mcp'] };
+  if (style === 'global') return { command: 'omni', args: ['mcp'] };
   if (style === 'npx')
-    return { command: 'npx', args: ['lat.md@latest', 'mcp'] };
+    return { command: 'npx', args: ['omni.md@latest', 'mcp'] };
   return mcpCommand();
 }
 
 // ── Claude Code helpers ──────────────────────────────────────────────
 
 /** Derive the hook command prefix for the given command style. */
-function latHookCommand(
-  style: LatCommandStyle,
+function omniHookCommand(
+  style: OmniCommandStyle,
   agent: 'claude' | 'cursor',
   event: string,
 ): string {
-  return `${latBinString(style)} hook ${agent} ${event}`;
+  return `${omniBinString(style)} hook ${agent} ${event}`;
 }
 
 type HookEntry = { hooks?: { type?: string; command?: string }[] };
 
 /** True if any command in this entry looks like it was installed by lat. */
-function isLatHookEntry(entry: HookEntry): boolean {
+function isOmniHookEntry(entry: HookEntry): boolean {
   const bin = resolve(process.argv[1]);
   return (
     entry.hooks?.some(
@@ -168,9 +168,9 @@ function isLatHookEntry(entry: HookEntry): boolean {
 
 /**
  * Remove all lat-owned hook entries from settings, then add fresh ones.
- * Preserves any non-lat hooks the user may have configured.
+ * Preserves any non-omni hooks the user may have configured.
  */
-function syncLatHooks(settingsPath: string, style: LatCommandStyle): void {
+function syncOmniHooks(settingsPath: string, style: OmniCommandStyle): void {
   let settings: Record<string, unknown> = {};
   if (existsSync(settingsPath)) {
     const raw = readFileSync(settingsPath, 'utf-8');
@@ -190,7 +190,7 @@ function syncLatHooks(settingsPath: string, style: LatCommandStyle): void {
   for (const [event, entries] of Object.entries(hooks)) {
     if (!Array.isArray(entries)) continue;
     const filtered = entries.filter(
-      (entry: HookEntry) => !isLatHookEntry(entry),
+      (entry: HookEntry) => !isOmniHookEntry(entry),
     );
     if (filtered.length > 0) {
       hooks[event] = filtered;
@@ -206,7 +206,7 @@ function syncLatHooks(settingsPath: string, style: LatCommandStyle): void {
     }
     (hooks[event] as unknown[]).push({
       hooks: [
-        { type: 'command', command: latHookCommand(style, 'claude', event) },
+        { type: 'command', command: omniHookCommand(style, 'claude', event) },
       ],
     });
   }
@@ -214,13 +214,13 @@ function syncLatHooks(settingsPath: string, style: LatCommandStyle): void {
   writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
 }
 
-function cursorHooksTemplate(style: LatCommandStyle): string {
+function cursorHooksTemplate(style: OmniCommandStyle): string {
   return (
     JSON.stringify(
       {
         version: 1,
         hooks: {
-          stop: [{ command: latHookCommand(style, 'cursor', 'stop') }],
+          stop: [{ command: omniHookCommand(style, 'cursor', 'stop') }],
         },
       },
       null,
@@ -291,7 +291,7 @@ function ensureGitignored(root: string, entry: string): void {
 
 /**
  * Derive the MCP server command from the currently running binary.
- * If `lat init` was invoked as `/path/to/lat`, we emit
+ * If `omni init` was invoked as `/path/to/lat`, we emit
  * `{ command: "/path/to/lat", args: ["mcp"] }` so the MCP client
  * starts the same binary. When running via tsx, emits
  * `{ command: "node", args: ["--import", "tsx/loader", ..., "script.ts", "mcp"] }`.
@@ -344,7 +344,7 @@ function hasMcpServer(configPath: string, key: string): boolean {
 function addMcpServer(
   configPath: string,
   key: string,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): void {
   let cfg: McpConfig = { [key]: {} };
   if (existsSync(configPath)) {
@@ -389,11 +389,11 @@ function hasCodexMcpServer(configPath: string): boolean {
  *
  * ```toml
  * [mcp_servers.lat]
- * command = "lat"
+ * command = "omni"
  * args = ["mcp"]
  * ```
  */
-function addCodexMcpServer(configPath: string, style: LatCommandStyle): void {
+function addCodexMcpServer(configPath: string, style: OmniCommandStyle): void {
   const cmd = styledMcpCommand(style);
 
   // Format args as a TOML inline array of quoted strings
@@ -475,11 +475,11 @@ async function writeTemplateFile(
     genTarget
       ? styleText('dim', `${indent}Kept existing file.`) +
           ' Run ' +
-          styleText('cyan', `lat gen ${genTarget}`) +
+          styleText('cyan', `omni gen ${genTarget}`) +
           ' to see the latest template.'
       : styleText('dim', `${indent}Kept existing file.`) +
           ' Re-run ' +
-          styleText('cyan', 'lat init') +
+          styleText('cyan', 'omni init') +
           ' to regenerate this file.',
   );
   return null;
@@ -487,8 +487,8 @@ async function writeTemplateFile(
 
 // ── Marker-based append for shared files ─────────────────────────────
 
-const MARKER_BEGIN = '%% lat:begin %%';
-const MARKER_END = '%% lat:end %%';
+const MARKER_BEGIN = '';
+const MARKER_END = '';
 
 /**
  * Extract the content between lat markers in a file's text.
@@ -568,9 +568,9 @@ async function appendTemplateSection(
     // User edited the section — ask before replacing
     console.log(
       styleText('yellow', `${indent}${label}`) +
-        ' lat section has been modified.',
+        ' omni section has been modified.',
     );
-    if (await ask(`${indent}Replace lat section with latest template?`)) {
+    if (await ask(`${indent}Replace omni section with latest template?`)) {
       const beginIdx = currentContent.indexOf(MARKER_BEGIN);
       const endIdx = currentContent.indexOf(MARKER_END) + MARKER_END.length;
       const endWithNl = currentContent[endIdx] === '\n' ? endIdx + 1 : endIdx;
@@ -607,7 +607,7 @@ async function appendTemplateSection(
   if (!content.endsWith('\n')) content += '\n';
   content += '\n' + wrapped;
   writeFileSync(absPath, content);
-  console.log(styleText('green', `${indent}Appended lat section to ${label}`));
+  console.log(styleText('green', `${indent}Appended omni section to ${label}`));
   return templateHash;
 }
 
@@ -623,7 +623,7 @@ async function writeAgentsSkill(
   console.log(
     styleText(
       'dim',
-      '  The lat-md skill teaches the agent how to write and maintain lat.md/ files.',
+      '  The omni-md skill teaches the agent how to write and maintain omni.md/ files.',
     ),
   );
 
@@ -631,14 +631,14 @@ async function writeAgentsSkill(
   const skillHash = await writeTemplateFile(
     root,
     latDir,
-    '.agents/skills/lat-md/SKILL.md',
+    '.agents/skills/omni-md/SKILL.md',
     skillTemplate,
     'skill.md',
-    'Skill (.agents/skills/lat-md/SKILL.md)',
+    'Skill (.agents/skills/omni-md/SKILL.md)',
     '  ',
     ask,
   );
-  if (skillHash) hashes['.agents/skills/lat-md/SKILL.md'] = skillHash;
+  if (skillHash) hashes['.agents/skills/omni-md/SKILL.md'] = skillHash;
 }
 
 // ── Per-agent setup ──────────────────────────────────────────────────
@@ -668,7 +668,7 @@ async function setupClaudeCode(
   template: string,
   hashes: Record<string, string>,
   ask: (message: string) => Promise<boolean>,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): Promise<void> {
   // CLAUDE.md — append-mode with markers (preserves user content)
   const hash = await appendTemplateSection(
@@ -682,33 +682,33 @@ async function setupClaudeCode(
   );
   if (hash) hashes['CLAUDE.md'] = hash;
 
-  // Hooks — UserPromptSubmit (lat.md reminders + [[ref]] expansion) and Stop (update reminder)
+  // Hooks — UserPromptSubmit (omni.md reminders + [[ref]] expansion) and Stop (update reminder)
   console.log('');
   console.log(
     styleText(
       'dim',
-      '  Hooks inject lat.md workflow reminders into every prompt and remind',
+      '  Hooks inject omni.md workflow reminders into every prompt and remind',
     ),
   );
   console.log(
-    styleText('dim', '  the agent to update lat.md/ before finishing.'),
+    styleText('dim', '  the agent to update omni.md/ before finishing.'),
   );
 
   const claudeDir = join(root, '.claude');
   const settingsPath = join(claudeDir, 'settings.json');
 
   mkdirSync(claudeDir, { recursive: true });
-  syncLatHooks(settingsPath, style);
+  syncOmniHooks(settingsPath, style);
   console.log(
     styleText('green', '  Hooks') + ' synced (UserPromptSubmit + Stop)',
   );
 
-  // .claude/skills/lat-md/SKILL.md — skill for authoring lat.md files
+  // .claude/skills/omni-md/SKILL.md — skill for authoring omni.md files
   console.log('');
   console.log(
     styleText(
       'dim',
-      '  The lat-md skill teaches the agent how to write and maintain lat.md/ files.',
+      '  The omni-md skill teaches the agent how to write and maintain omni.md/ files.',
     ),
   );
 
@@ -716,14 +716,14 @@ async function setupClaudeCode(
   const skillHash = await writeTemplateFile(
     root,
     latDir,
-    '.claude/skills/lat-md/SKILL.md',
+    '.claude/skills/omni-md/SKILL.md',
     skillTemplate,
     'skill.md',
-    'Skill (.claude/skills/lat-md/SKILL.md)',
+    'Skill (.claude/skills/omni-md/SKILL.md)',
     '  ',
     ask,
   );
-  if (skillHash) hashes['.claude/skills/lat-md/SKILL.md'] = skillHash;
+  if (skillHash) hashes['.claude/skills/omni-md/SKILL.md'] = skillHash;
 
   // Ensure .claude is gitignored (settings contain local absolute paths)
   ensureGitignored(root, '.claude');
@@ -762,27 +762,27 @@ async function setupCursor(
   latDir: string,
   hashes: Record<string, string>,
   ask: (message: string) => Promise<boolean>,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): Promise<void> {
-  // .cursor/rules/lat.md
+  // .cursor/rules/omni.md
   const hash = await writeTemplateFile(
     root,
     latDir,
-    '.cursor/rules/lat.md',
+    '.cursor/rules/omni.md',
     readCursorRulesTemplate(),
     'cursor-rules.md',
-    'Rules (.cursor/rules/lat.md)',
+    'Rules (.cursor/rules/omni.md)',
     '  ',
     ask,
   );
-  if (hash) hashes['.cursor/rules/lat.md'] = hash;
+  if (hash) hashes['.cursor/rules/omni.md'] = hash;
 
   // .cursor/hooks.json
   console.log('');
   console.log(
     styleText(
       'dim',
-      '  Cursor hooks can enforce the lat.md/ stop check, while prompt guidance',
+      '  Cursor hooks can enforce the omni.md/ stop check, while prompt guidance',
     ),
   );
   console.log(
@@ -832,7 +832,7 @@ async function setupCursor(
   // Ensure .cursor is gitignored (hooks and MCP config may contain local paths)
   ensureGitignored(root, '.cursor');
 
-  // .agents/skills/lat-md/SKILL.md — skill for authoring lat.md files
+  // .agents/skills/omni-md/SKILL.md — skill for authoring omni.md files
   await writeAgentsSkill(root, latDir, hashes, ask);
 
   console.log('');
@@ -847,7 +847,7 @@ async function setupCopilot(
   latDir: string,
   hashes: Record<string, string>,
   ask: (message: string) => Promise<boolean>,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): Promise<void> {
   // .github/copilot-instructions.md — append-mode with markers
   const hash = await appendTemplateSection(
@@ -886,7 +886,7 @@ async function setupCopilot(
     );
   }
 
-  // .agents/skills/lat-md/SKILL.md — skill for authoring lat.md files
+  // .agents/skills/omni-md/SKILL.md — skill for authoring omni.md files
   await writeAgentsSkill(root, latDir, hashes, ask);
 }
 
@@ -895,7 +895,7 @@ async function setupPi(
   latDir: string,
   hashes: Record<string, string>,
   ask: (message: string) => Promise<boolean>,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): Promise<void> {
   // AGENTS.md — Pi reads this natively
   // (already created in the shared step if any non-Claude agent is selected)
@@ -911,13 +911,13 @@ async function setupPi(
   console.log(
     styleText(
       'dim',
-      '  to inject search context and validate lat.md/ before finishing.',
+      '  to inject search context and validate omni.md/ before finishing.',
     ),
   );
 
   const template = readPiExtensionTemplate().replace(
-    '__LAT_BIN__',
-    latBinString(style),
+    '__OMNI_BIN__',
+    omniBinString(style),
   );
 
   const hash = await writeTemplateFile(
@@ -932,12 +932,12 @@ async function setupPi(
   );
   if (hash) hashes['.pi/extensions/lat.ts'] = hash;
 
-  // .pi/skills/lat-md/SKILL.md — skill for authoring lat.md files
+  // .pi/skills/omni-md/SKILL.md — skill for authoring omni.md files
   console.log('');
   console.log(
     styleText(
       'dim',
-      '  The lat-md skill teaches the agent how to write and maintain lat.md/ files.',
+      '  The omni-md skill teaches the agent how to write and maintain omni.md/ files.',
     ),
   );
 
@@ -945,14 +945,14 @@ async function setupPi(
   const skillHash = await writeTemplateFile(
     root,
     latDir,
-    '.pi/skills/lat-md/SKILL.md',
+    '.pi/skills/omni-md/SKILL.md',
     skillTemplate,
     'skill.md',
-    'Skill (.pi/skills/lat-md/SKILL.md)',
+    'Skill (.pi/skills/omni-md/SKILL.md)',
     '  ',
     ask,
   );
-  if (skillHash) hashes['.pi/skills/lat-md/SKILL.md'] = skillHash;
+  if (skillHash) hashes['.pi/skills/omni-md/SKILL.md'] = skillHash;
 
   // Ensure .pi is gitignored (extension contains local absolute paths)
   ensureGitignored(root, '.pi');
@@ -963,7 +963,7 @@ async function setupOpenCode(
   latDir: string,
   hashes: Record<string, string>,
   ask: (message: string) => Promise<boolean>,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): Promise<void> {
   // AGENTS.md — OpenCode reads this natively
   // (already created in the shared step if any non-Claude agent is selected)
@@ -979,13 +979,13 @@ async function setupOpenCode(
   console.log(
     styleText(
       'dim',
-      '  lifecycle to validate lat.md/ when the agent finishes.',
+      '  lifecycle to validate omni.md/ when the agent finishes.',
     ),
   );
 
   const template = readOpenCodePluginTemplate().replace(
-    '__LAT_BIN__',
-    latBinString(style),
+    '__OMNI_BIN__',
+    omniBinString(style),
   );
 
   const hash = await writeTemplateFile(
@@ -1000,7 +1000,7 @@ async function setupOpenCode(
   );
   if (hash) hashes['.opencode/plugins/lat.ts'] = hash;
 
-  // .agents/skills/lat-md/SKILL.md — skill for authoring lat.md files
+  // .agents/skills/omni-md/SKILL.md — skill for authoring omni.md files
   await writeAgentsSkill(root, latDir, hashes, ask);
 
   // Ensure .opencode is gitignored (plugin contains local absolute paths)
@@ -1012,7 +1012,7 @@ async function setupCodex(
   latDir: string,
   hashes: Record<string, string>,
   ask: (message: string) => Promise<boolean>,
-  style: LatCommandStyle,
+  style: OmniCommandStyle,
 ): Promise<void> {
   // AGENTS.md — Codex reads this natively
   // (already created in the shared step if any non-Claude agent is selected)
@@ -1045,15 +1045,15 @@ async function setupCodex(
   // Ensure .codex is gitignored (config contains local absolute paths)
   ensureGitignored(root, '.codex');
 
-  // .agents/skills/lat-md/SKILL.md — skill for authoring lat.md files
+  // .agents/skills/omni-md/SKILL.md — skill for authoring omni.md files
   await writeAgentsSkill(root, latDir, hashes, ask);
 
-  // .codex/skills/lat-md/SKILL.md — Codex-specific skills directory
+  // .codex/skills/omni-md/SKILL.md — Codex-specific skills directory
   console.log('');
   console.log(
     styleText(
       'dim',
-      '  The lat-md skill teaches the agent how to write and maintain lat.md/ files.',
+      '  The omni-md skill teaches the agent how to write and maintain omni.md/ files.',
     ),
   );
 
@@ -1061,14 +1061,14 @@ async function setupCodex(
   const skillHash = await writeTemplateFile(
     root,
     latDir,
-    '.codex/skills/lat-md/SKILL.md',
+    '.codex/skills/omni-md/SKILL.md',
     skillTemplate,
     'skill.md',
-    'Skill (.codex/skills/lat-md/SKILL.md)',
+    'Skill (.codex/skills/omni-md/SKILL.md)',
     '  ',
     ask,
   );
-  if (skillHash) hashes['.codex/skills/lat-md/SKILL.md'] = skillHash;
+  if (skillHash) hashes['.codex/skills/omni-md/SKILL.md'] = skillHash;
 }
 
 // ── LLM key setup ───────────────────────────────────────────────────
@@ -1091,8 +1091,8 @@ async function setupLlmKey(
   console.log(styleText('bold', 'Semantic search'));
   console.log('');
   console.log(
-    '  lat.md includes semantic search (' +
-      styleText('cyan', 'lat search') +
+    '  omni.md includes semantic search (' +
+      styleText('cyan', 'omni search') +
       ') that lets agents find',
   );
   console.log(
@@ -1103,7 +1103,7 @@ async function setupLlmKey(
   );
   console.log(
     '  use ' +
-      styleText('cyan', 'lat locate') +
+      styleText('cyan', 'omni locate') +
       ' for exact lookups, but will miss semantic matches.',
   );
   console.log('');
@@ -1112,8 +1112,8 @@ async function setupLlmKey(
   if (!rl) {
     console.log(
       styleText('yellow', '  No LLM key found.') +
-        ' Set LAT_LLM_KEY env var or run ' +
-        styleText('cyan', 'lat init') +
+        ' Set OMNI_LLM_KEY env var or run ' +
+        styleText('cyan', 'omni init') +
         ' interactively.',
     );
     return;
@@ -1121,7 +1121,7 @@ async function setupLlmKey(
 
   console.log(
     '  You can provide a key now, or skip and set ' +
-      styleText('cyan', 'LAT_LLM_KEY') +
+      styleText('cyan', 'OMNI_LLM_KEY') +
       ' env var later.',
   );
   console.log(
@@ -1139,9 +1139,9 @@ async function setupLlmKey(
     console.log(
       styleText('dim', '  Skipped.') +
         ' You can set ' +
-        styleText('cyan', 'LAT_LLM_KEY') +
+        styleText('cyan', 'OMNI_LLM_KEY') +
         ' later or re-run ' +
-        styleText('cyan', 'lat init') +
+        styleText('cyan', 'omni init') +
         '.',
     );
     return;
@@ -1154,7 +1154,7 @@ async function setupLlmKey(
         " Anthropic doesn't offer embeddings.",
     );
     console.log(
-      '  lat.md needs an OpenAI (' +
+      '  omni.md needs an OpenAI (' +
         styleText('dim', 'sk-...') +
         ') or Vercel AI Gateway (' +
         styleText('dim', 'vck_...') +
@@ -1184,7 +1184,7 @@ async function setupLlmKey(
 // ── Post-onboarding guidance ─────────────────────────────────────────
 
 const NEXT_STEP_PROMPT =
-  'Read through this codebase and set up lat.md/ to document its architecture, key design decisions, and domain concepts. Run `lat check` when done.';
+  'Read through this codebase and set up omni.md/ to document its architecture, key design decisions, and domain concepts. Run `omni check` when done.';
 
 function printNextSteps(selectedAgents: string[]): void {
   const hasClaudeCode = selectedAgents.includes('claude');
@@ -1244,7 +1244,7 @@ export async function initCmd(targetDir?: string): Promise<void> {
         ' → ' +
         styleText('green', latest) +
         ' — run ' +
-        styleText('cyan', 'npm install -g lat.md') +
+        styleText('cyan', 'npm install -g omni.md') +
         ' to update.',
     );
     console.log('');
@@ -1253,7 +1253,7 @@ export async function initCmd(targetDir?: string): Promise<void> {
   }
 
   const root = resolve(targetDir ?? process.cwd());
-  const latDir = join(root, 'lat.md');
+  const latDir = join(root, 'omni.md');
 
   const interactive = process.stdin.isTTY ?? false;
 
@@ -1269,9 +1269,9 @@ export async function initCmd(targetDir?: string): Promise<void> {
   };
 
   try {
-    // Step 1: lat.md/ directory
+    // Step 1: omni.md/ directory
     if (existsSync(latDir)) {
-      console.log(styleText('green', 'lat.md/') + ' already exists');
+      console.log(styleText('green', 'omni.md/') + ' already exists');
     } else {
       // No rl yet — selectMenu hasn't run, so use a one-off confirm
       if (interactive) {
@@ -1280,7 +1280,7 @@ export async function initCmd(targetDir?: string): Promise<void> {
           output: process.stdout,
         });
         try {
-          if (!(await confirm(tmpRl, 'Create lat.md/ directory?'))) {
+          if (!(await confirm(tmpRl, 'Create omni.md/ directory?'))) {
             console.log('Aborted.');
             return;
           }
@@ -1291,7 +1291,7 @@ export async function initCmd(targetDir?: string): Promise<void> {
       const templateDir = join(findTemplatesDir(), 'init');
       mkdirSync(latDir, { recursive: true });
       cpSync(templateDir, latDir, { recursive: true });
-      console.log(styleText('green', 'Created lat.md/'));
+      console.log(styleText('green', 'Created omni.md/'));
     }
 
     // Step 2: Which coding agents do you use? (interactive select menu)
@@ -1328,14 +1328,14 @@ export async function initCmd(targetDir?: string): Promise<void> {
       useCodex;
 
     // Step 2b: How should agents run lat?
-    let commandStyle: LatCommandStyle = 'local';
+    let commandStyle: OmniCommandStyle = 'local';
     if (anySelected && needsLatCommand && interactive) {
       console.log('');
-      const localBin = resolveLatBin();
+      const localBin = resolveOmniBin();
       const styleOptions: SelectOption[] = [
-        { label: 'lat', value: 'global' },
+        { label: 'omni', value: 'global' },
         { label: localBin, value: 'local' },
-        { label: 'npx lat.md@latest', value: 'npx' },
+        { label: 'npx omni.md@latest', value: 'npx' },
       ];
       const styleChoice = await selectMenu(
         styleOptions,
@@ -1346,7 +1346,7 @@ export async function initCmd(targetDir?: string): Promise<void> {
         console.log('Aborted.');
         return;
       }
-      commandStyle = styleChoice as LatCommandStyle;
+      commandStyle = styleChoice as OmniCommandStyle;
     }
 
     // Now that selectMenu is done, it's safe to create the readline interface.
@@ -1362,7 +1362,7 @@ export async function initCmd(targetDir?: string): Promise<void> {
       console.log('');
       console.log(
         styleText('dim', 'No agents selected. You can re-run') +
-          ' lat init ' +
+          ' omni init ' +
           styleText('dim', 'later.'),
       );
       return;
@@ -1426,14 +1426,14 @@ export async function initCmd(targetDir?: string): Promise<void> {
     // Step 5: LLM key setup
     await setupLlmKey(rl);
 
-    // Record init version and file hashes so `lat check` can detect stale setups
+    // Record init version and file hashes so `omni check` can detect stale setups
     writeInitMeta(latDir, fileHashes);
 
     console.log('');
     console.log(
       styleText('green', 'Done!') +
         ' Run ' +
-        styleText('cyan', 'lat check') +
+        styleText('cyan', 'omni check') +
         ' to validate your setup.',
     );
 

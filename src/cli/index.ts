@@ -38,10 +38,10 @@ const version = findPackageJson();
 const program = new Command();
 
 program
-  .name('lat')
+  .name('omni')
   .description('Anchor source code to high-level concepts defined in markdown')
   .version(version)
-  .option('--dir <path>', 'project root to look for lat.md in (default: cwd)')
+  .option('--dir <path>', 'project root to look for omni.md in (default: cwd)')
   .option('--no-color', 'disable color output')
   .option('--verbose', 'show deprecation warnings and extra diagnostics');
 
@@ -94,7 +94,7 @@ const check = program
 
 check
   .command('md')
-  .description('Validate wiki links in lat.md markdown files')
+  .description('Validate wiki links in omni.md markdown files')
   .action(async () => {
     const ctx = resolveContext(program.opts());
     const { checkMdCommand } = await import('./check.js');
@@ -112,7 +112,7 @@ check
 
 check
   .command('index')
-  .description('Validate directory index files in lat.md')
+  .description('Validate directory index files in omni.md')
   .action(async () => {
     const ctx = resolveContext(program.opts());
     const { checkIndexCommand } = await import('./check.js');
@@ -121,7 +121,7 @@ check
 
 check
   .command('sections')
-  .description('Validate section leading paragraphs in lat.md')
+  .description('Validate section leading paragraphs in omni.md')
   .action(async () => {
     const ctx = resolveContext(program.opts());
     const { checkSectionsCommand } = await import('./check.js');
@@ -156,7 +156,7 @@ async function runExpand(
 
 program
   .command('expand')
-  .description('Expand [[refs]] in text to lat.md section locations')
+  .description('Expand [[refs]] in text to omni.md section locations')
   .argument('[text]', 'text containing [[refs]]')
   .option('--stdin', 'read text from stdin')
   .action(runExpand);
@@ -168,14 +168,14 @@ program
   .option('--stdin')
   .action(async (text: string | undefined, opts: { stdin?: boolean }) => {
     console.error(
-      'Warning: `lat prompt` is deprecated, use `lat expand` instead.',
+      'Warning: `omni prompt` is deprecated, use `omni expand` instead.',
     );
     await runExpand(text, opts);
   });
 
 program
   .command('search')
-  .description('Semantic search across lat.md sections')
+  .description('Semantic search across omni.md sections')
   .argument('[query]', 'search query in plain English')
   .option('--limit <n>', 'max results', '5')
   .option('--reindex', 'force full re-indexing')
@@ -213,7 +213,7 @@ program
 
 program
   .command('init')
-  .description('Initialize a lat.md directory')
+  .description('Initialize a omni.md directory')
   .argument('[dir]', 'target directory (default: cwd)')
   .action(async (dir?: string) => {
     const { initCmd } = await import('./init.js');

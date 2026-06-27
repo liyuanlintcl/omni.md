@@ -4,7 +4,7 @@ import {
   findSections,
   type Section,
   type SectionMatch,
-} from '../lattice.js';
+} from '../omnidoc.js';
 import type { CmdContext, CmdResult } from '../context.js';
 
 const WIKI_LINK_RE = /\[\[([^\]]+)\]\]/g;
@@ -60,7 +60,7 @@ export async function expandPrompt(
   });
 
   // Append context block as nested outliner
-  output += '\n\n<lat-context>\n';
+  output += '\n\n<omni-context>\n';
   for (const ref of resolved.values()) {
     const isExact =
       ref.best.reason === 'exact match' ||
@@ -82,7 +82,7 @@ export async function expandPrompt(
       }
     }
   }
-  output += '</lat-context>\n';
+  output += '</omni-context>\n';
 
   return output;
 }

@@ -26,25 +26,25 @@ export type Ref = {
   line: number;
 };
 
-export type LatFrontmatter = {
+export type OmniFrontmatter = {
   requireCodeMention?: boolean;
 };
 
-export function parseFrontmatter(content: string): LatFrontmatter {
+export function parseFrontmatter(content: string): OmniFrontmatter {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return {};
   const yaml = match[1];
-  const result: LatFrontmatter = {};
+  const result: OmniFrontmatter = {};
   if (/require-code-mention:\s*true/i.test(yaml)) {
     result.requireCodeMention = true;
   }
   return result;
 }
 
-export function findLatticeDir(from?: string): string | null {
+export function findOmniDir(from?: string): string | null {
   let dir = resolve(from ?? process.cwd());
   while (true) {
-    const candidate = join(dir, 'lat.md');
+    const candidate = join(dir, 'omni.md');
     if (existsSync(candidate) && statSync(candidate).isDirectory()) {
       return candidate;
     }
@@ -55,11 +55,11 @@ export function findLatticeDir(from?: string): string | null {
 }
 
 export function findProjectRoot(from?: string): string | null {
-  const latDir = findLatticeDir(from);
+  const latDir = findOmniDir(from);
   return latDir ? dirname(latDir) : null;
 }
 
-export async function listLatticeFiles(latticeDir: string): Promise<string[]> {
+export async function listOmniFiles(latticeDir: string): Promise<string[]> {
   const entries = await walkEntries(latticeDir);
   return entries
     .filter((e) => e.endsWith('.md'))
@@ -99,10 +99,10 @@ export function parseSections(
 ): Section[] {
   const tree = parse(content);
   const file = projectRoot
-    ? relative(projectRoot, filePath).replace(/\.md$/, '')
+    ? relative(projectRoot, filePath).replace(/\.md$/, '').replace(/\\/g, '/')
     : basename(filePath, '.md');
   const sectionFilePath = projectRoot
-    ? relative(projectRoot, filePath)
+    ? relative(projectRoot, filePath).replace(/\\/g, '/')
     : basename(filePath);
   const roots: Section[] = [];
   const stack: Section[] = [];
@@ -178,7 +178,7 @@ export function parseSections(
 
 export async function loadAllSections(latticeDir: string): Promise<Section[]> {
   const projectRoot = dirname(latticeDir);
-  const files = await listLatticeFiles(latticeDir);
+  const files = await listOmniFiles(latticeDir);
   const all: Section[] = [];
   for (const file of files) {
     const content = await readFile(file, 'utf-8');
@@ -233,9 +233,9 @@ function tailSegments(id: string): string[] {
  * Build an index mapping path suffixes to their full vault-relative paths.
  * Used by resolveRef to allow short references when a suffix is unambiguous.
  *
- * For a file like `lat.md/guides/setup`, indexes both `guides/setup` and `setup`.
+ * For a file like `omni.md/guides/setup`, indexes both `guides/setup` and `setup`.
  * This ensures backward-compatible short refs after the vault root moved to the
- * project root (so section IDs now include the `lat.md/` prefix).
+ * project root (so section IDs now include the `omni.md/` prefix).
  */
 export function buildFileIndex(sections: Section[]): Map<string, string[]> {
   const flat = flattenSections(sections);
@@ -377,7 +377,7 @@ export function findSections(
   const fileIndex = buildFileIndex(sections);
 
   // Tier 1a: bare name matches file — return root sections of that file
-  // Also checks via file index (e.g. "dev-process" → "lat.md/dev-process")
+  // Also checks via file index (e.g. "dev-process" → "omni.md/dev-process")
   if (!isFullPath && exactMatches.length === 0) {
     const matchFiles = new Set<string>();
     // Direct match

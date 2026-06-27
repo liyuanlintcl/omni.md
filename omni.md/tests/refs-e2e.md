@@ -4,7 +4,7 @@ lat:
 ---
 # Refs End-to-End
 
-End-to-end tests for the `lat refs` command across multiple files.
+End-to-end tests for the `omni refs` command across multiple files.
 
 ## Finds referring sections via wiki links
 

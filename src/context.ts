@@ -23,7 +23,7 @@ export const plainStyler: Styler = {
 };
 
 export type CmdContext = {
-  latDir: string;
+  omniDir: string;
   projectRoot: string;
   styler: Styler;
   mode: 'cli' | 'mcp';

@@ -4,7 +4,7 @@ lat:
 ---
 # Expand
 
-Tests for the `lat expand` command that resolves `[[refs]]` and appends context blocks.
+Tests for the `omni expand` command that resolves `[[refs]]` and appends context blocks.
 
 ## Resolves exact ref with context
 

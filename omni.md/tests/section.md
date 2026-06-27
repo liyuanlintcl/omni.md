@@ -13,7 +13,7 @@ When the query doesn't match any section (even fuzzily), `getSection` returns `k
 
 ## Full id resolves to section
 
-Given a fully qualified section id like `lat.md/dev-process#Dev Process#Testing`, `getSection` returns the section with its raw markdown content.
+Given a fully qualified section id like `omni.md/dev-process#Dev Process#Testing`, `getSection` returns the section with its raw markdown content.
 
 ## Short id resolves to section
 
@@ -45,4 +45,4 @@ Verifies that `formatSectionOutput` correctly renders the "Referenced by" block 
 
 ## formatSectionOutput includes all parts
 
-`formatSectionOutput` produces styled output containing section id, location, raw content, "This section references" with outgoing refs, "Referenced by" with incoming refs, and "Referenced by code" with `@lat:` back-references.
+`formatSectionOutput` produces styled output containing section id, location, raw content, "This section references" with outgoing refs, "Referenced by" with incoming refs, and "Referenced by code" with `@omni:` back-references.

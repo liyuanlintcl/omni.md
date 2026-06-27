@@ -7,7 +7,7 @@ import {
   loadAllSections,
   flattenSections,
   type SectionMatch,
-} from '../lattice.js';
+} from '../omnidoc.js';
 import { formatResultList, formatNavHints } from '../format.js';
 
 export type SearchResult = {
@@ -51,7 +51,7 @@ async function withDb<T>(
 }
 
 /**
- * Run a semantic search across lat.md sections.
+ * Run a semantic search across omni.md sections.
  * Handles indexing (with optional progress callback). Returns matched sections.
  */
 export async function runSearch(
@@ -81,7 +81,7 @@ export async function runSearch(
 }
 
 /**
- * Index-only mode (no query). Used by `lat search --reindex`.
+ * Index-only mode (no query). Used by `omni search --reindex`.
  */
 export async function runIndex(
   latDir: string,
@@ -135,8 +135,8 @@ export async function searchCommand(
     return {
       output:
         s.red('No API key configured.') +
-        ' Provide a key via LAT_LLM_KEY, LAT_LLM_KEY_FILE, LAT_LLM_KEY_HELPER, or run ' +
-        s.cyan('lat init') +
+        ' Provide a key via OMNI_LLM_KEY, OMNI_LLM_KEY_FILE, OMNI_LLM_KEY_HELPER, or run ' +
+        s.cyan('omni init') +
         (ctx.mode === 'cli'
           ? ' to save one in ' + s.dim(getConfigPath())
           : '') +

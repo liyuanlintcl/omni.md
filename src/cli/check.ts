@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { basename, dirname, extname, join, relative } from 'node:path';
 import {
-  listLatticeFiles,
+  listOmniFiles,
   loadAllSections,
   extractRefs,
   flattenSections,
@@ -11,7 +11,7 @@ import {
   buildFileIndex,
   resolveRef,
   type Section,
-} from '../lattice.js';
+} from '../omnidoc.js';
 import { scanCodeRefs } from '../code-refs.js';
 import { SOURCE_EXTENSIONS, clearSymbolCache } from '../source-parser.js';
 import { walkEntries } from '../walk.js';
@@ -139,7 +139,7 @@ async function tryResolveSourceRef(
 export async function checkMd(latticeDir: string): Promise<CheckResult> {
   clearSymbolCache();
   const projectRoot = dirname(latticeDir);
-  const files = await listLatticeFiles(latticeDir);
+  const files = await listOmniFiles(latticeDir);
   const allSections = await loadAllSections(latticeDir);
   const flat = flattenSections(allSections);
   const sectionIds = new Set(flat.map((s) => s.id.toLowerCase()));
@@ -214,12 +214,12 @@ export async function checkCodeRefs(latticeDir: string): Promise<CheckResult> {
         file: displayPath,
         line: ref.line,
         target: ref.target,
-        message: `@lat: [[${ref.target}]] — no matching section found`,
+        message: `@omni: [[${ref.target}]] — no matching section found`,
       });
     }
   }
 
-  const files = await listLatticeFiles(latticeDir);
+  const files = await listOmniFiles(latticeDir);
   for (const file of files) {
     const content = await readFile(file, 'utf-8');
     const fm = parseFrontmatter(content);
@@ -292,14 +292,14 @@ export async function checkIndex(latticeDir: string): Promise<IndexError[]> {
   const errors: IndexError[] = [];
   const allPaths = await walkEntries(latticeDir);
 
-  // Flag non-.md files — only markdown belongs in lat.md/
+  // Flag non-.md files — only markdown belongs in omni.md/
   for (const p of allPaths) {
     const name = p.includes('/') ? p.slice(p.lastIndexOf('/') + 1) : p;
     if (!name.endsWith('.md')) {
       const relDir = basename(latticeDir) + '/';
       errors.push({
         dir: relDir,
-        message: `"${p}" is not a .md file — only markdown files belong in lat.md/`,
+        message: `"${p}" is not a .md file — only markdown files belong in omni.md/`,
       });
     }
   }
@@ -319,7 +319,7 @@ export async function checkIndex(latticeDir: string): Promise<IndexError[]> {
 
   for (const dir of dirs) {
     // Determine the index file name and its expected path.
-    // The index file shares the directory's name — for `lat.md/` it's `lat.md`,
+    // The index file shares the directory's name — for `omni.md/` it's `omni.md`,
     // for a subdir `api/` it's `api.md`.
     const dirName = dir === '' ? basename(latticeDir) : dir.split('/').pop()!;
     const indexFileName = dirName.endsWith('.md') ? dirName : dirName + '.md';
@@ -398,7 +398,7 @@ function bodyTextLength(body: string): number {
 
 export async function checkSections(latticeDir: string): Promise<CheckError[]> {
   const projectRoot = dirname(latticeDir);
-  const files = await listLatticeFiles(latticeDir);
+  const files = await listOmniFiles(latticeDir);
   const errors: CheckError[] = [];
 
   for (const file of files) {
@@ -485,10 +485,10 @@ function formatErrorCount(count: number, s: Styler): string {
 
 export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
   const startTime = Date.now();
-  const md = await checkMd(ctx.latDir);
-  const code = await checkCodeRefs(ctx.latDir);
-  const indexErrors = await checkIndex(ctx.latDir);
-  const sectionErrors = await checkSections(ctx.latDir);
+  const md = await checkMd(ctx.omniDir);
+  const code = await checkCodeRefs(ctx.omniDir);
+  const indexErrors = await checkIndex(ctx.omniDir);
+  const sectionErrors = await checkSections(ctx.omniDir);
   const elapsed = Date.now() - startTime;
 
   const allErrors = [...md.errors, ...code.errors];
@@ -505,13 +505,13 @@ export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
   ];
 
   // Init version warning first — user should fix setup before addressing errors
-  const storedVersion = readInitVersion(ctx.latDir);
+  const storedVersion = readInitVersion(ctx.omniDir);
   if (storedVersion === null) {
     lines.push(
       '',
       s.yellow('Warning:') +
         ' No init version recorded — run ' +
-        s.cyan('lat init') +
+        s.cyan('omni init') +
         ' to set up agent hooks and configuration.',
     );
   } else if (storedVersion < INIT_VERSION) {
@@ -523,7 +523,7 @@ export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
         ' → v' +
         INIT_VERSION +
         '). Re-run ' +
-        s.cyan('lat init') +
+        s.cyan('omni init') +
         ' to update agent hooks and configuration.',
     );
   }
@@ -551,9 +551,9 @@ export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
   if (!hasKey) {
     lines.push(
       s.yellow('Warning:') +
-        ' No LLM key found — semantic search (lat search) will not work.' +
-        ' Provide a key via LAT_LLM_KEY, LAT_LLM_KEY_FILE, LAT_LLM_KEY_HELPER, or run ' +
-        s.cyan('lat init') +
+        ' No LLM key found — semantic search (omni search) will not work.' +
+        ' Provide a key via OMNI_LLM_KEY, OMNI_LLM_KEY_FILE, OMNI_LLM_KEY_HELPER, or run ' +
+        s.cyan('omni init') +
         ' to configure.',
     );
   }
@@ -576,7 +576,7 @@ export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
 }
 
 export async function checkMdCommand(ctx: CmdContext): Promise<CmdResult> {
-  const { errors, files } = await checkMd(ctx.latDir);
+  const { errors, files } = await checkMd(ctx.omniDir);
   const s = ctx.styler;
   const lines: string[] = [formatFileStats(files, s)];
 
@@ -594,7 +594,7 @@ export async function checkMdCommand(ctx: CmdContext): Promise<CmdResult> {
 export async function checkCodeRefsCommand(
   ctx: CmdContext,
 ): Promise<CmdResult> {
-  const { errors, files } = await checkCodeRefs(ctx.latDir);
+  const { errors, files } = await checkCodeRefs(ctx.omniDir);
   const s = ctx.styler;
   const lines: string[] = [formatFileStats(files, s)];
 
@@ -610,7 +610,7 @@ export async function checkCodeRefsCommand(
 }
 
 export async function checkIndexCommand(ctx: CmdContext): Promise<CmdResult> {
-  const errors = await checkIndex(ctx.latDir);
+  const errors = await checkIndex(ctx.omniDir);
   const s = ctx.styler;
   const lines: string[] = [];
 
@@ -628,7 +628,7 @@ export async function checkIndexCommand(ctx: CmdContext): Promise<CmdResult> {
 export async function checkSectionsCommand(
   ctx: CmdContext,
 ): Promise<CmdResult> {
-  const errors = await checkSections(ctx.latDir);
+  const errors = await checkSections(ctx.omniDir);
   const s = ctx.styler;
   const lines: string[] = [];
 

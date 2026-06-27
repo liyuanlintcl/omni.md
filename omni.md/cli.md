@@ -16,9 +16,9 @@ Find sections by query. Strips `[[brackets]]` and leading `#` from the query bef
 
 Outputs a [[cli#Section Preview]] for each match.
 
-Usage: `lat locate <query>`
+Usage: `omni locate <query>`
 
-Implementation: [[src/cli/locate.ts]], matching logic in [[src/lattice.ts#findSections]]
+Implementation: [[src/cli/locate.ts]], matching logic in [[src/omnidoc.ts#findSections]]
 
 ## section
 
@@ -30,14 +30,14 @@ Output:
 
 1. Section header with id and file location
 2. Section content blockquoted (`>`) from `startLine` through the end of the last descendant subsection
-3. **This section references** — all wiki link targets found within the section, including both lat.md section refs (with body descriptions) and source code refs (with file path and line range, e.g. `file.ts:10-25`, plus a 5-line snippet centered on the symbol)
-4. **Referenced by** — other sections in `lat.md/` that contain wiki links pointing to this section
-5. **Referenced by code** — source files containing `@lat:` comments that reference this section, each shown with file path, line number, and a 5-line snippet centered on the reference
-6. **Navigation hints** — same footer as [[cli#search]], suggesting `lat section` and `lat search` as next steps
+3. **This section references** — all wiki link targets found within the section, including both omni.md section refs (with body descriptions) and source code refs (with file path and line range, e.g. `file.ts:10-25`, plus a 5-line snippet centered on the symbol)
+4. **Referenced by** — other sections in `omni.md/` that contain wiki links pointing to this section
+5. **Referenced by code** — source files containing `@omni:` comments that reference this section, each shown with file path, line number, and a 5-line snippet centered on the reference
+6. **Navigation hints** — same footer as [[cli#search]], suggesting `omni section` and `omni search` as next steps
 
-Usage: `lat section <query>`
+Usage: `omni section <query>`
 
-Core logic in [[src/cli/section.ts#getSection]] (returns structured result), used by both the CLI command and [[cli#mcp]] `lat_section` tool.
+Core logic in [[src/cli/section.ts#getSection]] (returns structured result), used by both the CLI command and [[cli#mcp]] `omni_section` tool.
 
 ## refs
 
@@ -49,36 +49,36 @@ Find sections that reference a given target via [[parser#Wiki Links]]. The query
 
 Outputs a [[cli#Section Preview]] for each referring section.
 
-Usage: `lat refs <query> [--scope=md|code|md+code]`
+Usage: `omni refs <query> [--scope=md|code|md+code]`
 
 ### Scope
 
-- `md` — search `lat.md` markdown files for wiki links targeting the query
-- `code` — scan source files for `@lat: [[...]]` comments matching the query
+- `md` — search `omni.md` markdown files for wiki links targeting the query
+- `code` — scan source files for `@omni: [[...]]` comments matching the query
 - `md+code` (default) — both
 
-Core logic in [[src/cli/refs.ts#findRefs]] (returns structured result), used by both the CLI command and [[cli#mcp]] `lat_refs` tool.
+Core logic in [[src/cli/refs.ts#findRefs]] (returns structured result), used by both the CLI command and [[cli#mcp]] `omni_refs` tool.
 
 ## check
 
 Validation command group. Runs all checks when invoked without a subcommand.
 
-Usage: `lat check [md|code-refs|index|sections]`
+Usage: `omni check [md|code-refs|index|sections]`
 
-Emits a stale-init warning before any errors so the user sees setup issues first. The init version check compares `INIT_VERSION` in [[src/init-version.ts]] against the version in `lat.md/.cache/lat_init.json` written by [[cli#init]]. Missing LLM key warning appears only when all checks pass. If the total check took longer than one second and ripgrep is not installed, shows a tip suggesting the user install it for faster scanning. The first output line ("Scanned ...") includes the total elapsed time (e.g. "in 250ms" or "in 1.2s").
+Emits a stale-init warning before any errors so the user sees setup issues first. The init version check compares `INIT_VERSION` in [[src/init-version.ts]] against the version in `omni.md/.cache/omni_init.json` written by [[cli#init]]. Missing LLM key warning appears only when all checks pass. If the total check took longer than one second and ripgrep is not installed, shows a tip suggesting the user install it for faster scanning. The first output line ("Scanned ...") includes the total elapsed time (e.g. "in 250ms" or "in 1.2s").
 
 Implementation: [[src/cli/check.ts]]
 
 ### md
 
-Validate that all [[parser#Wiki Links]] in `lat.md` markdown files point to existing sections.
+Validate that all [[parser#Wiki Links]] in `omni.md` markdown files point to existing sections.
 
 ### code-refs
 
 Two validations:
 
-1. Every `// @lat: [[...]]` or `# @lat: [[...]]` comment in source code must point to a real section in `lat.md/`
-2. For files with [[markdown#Frontmatter#require-code-mention]], every leaf section must be referenced by at least one `// @lat:` comment in the codebase
+1. Every `// @omni: [[...]]` or `# @omni: [[...]]` comment in source code must point to a real section in `omni.md/`
+2. For files with [[markdown#Frontmatter#require-code-mention]], every leaf section must be referenced by at least one `// @omni:` comment in the codebase
 
 ### sections
 
@@ -91,13 +91,13 @@ The character count strips all `[[...]]` wiki link syntax before measuring, so l
 
 ### index
 
-Validate directory index files. Every directory inside `lat.md/` (including the root) must have an index file named after the directory with a bullet list of its contents.
+Validate directory index files. Every directory inside `omni.md/` (including the root) must have an index file named after the directory with a bullet list of its contents.
 
-Each index file must contain a bullet list covering every visible file and subdirectory with a one-sentence description, using wiki links: `- [[name]] — description`. File entries omit the `.md` extension (e.g. `[[cli]]` not `[[cli.md]]`). Root example: `lat.md/lat.md`; subdirectory example: `lat.md/api/api.md`.
+Each index file must contain a bullet list covering every visible file and subdirectory with a one-sentence description, using wiki links: `- [[name]] — description`. File entries omit the `.md` extension (e.g. `[[cli]]` not `[[cli.md]]`). Root example: `omni.md/omni.md`; subdirectory example: `omni.md/api/api.md`.
 
 Four checks:
 
-1. **Non-markdown files** — any file without a `.md` extension is flagged as an error (only markdown belongs in `lat.md/`)
+1. **Non-markdown files** — any file without a `.md` extension is flagged as an error (only markdown belongs in `omni.md/`)
 2. **Missing index file** — errors with a ready-to-copy bullet list snippet
 3. **Missing entries** — index file exists but doesn't list all visible entries
 4. **Stale entries** — index file lists an entry that doesn't exist on disk
@@ -108,9 +108,9 @@ Directory walking uses [[dev-process#File Walking]] to respect `.gitignore` rule
 
 ## expand
 
-Expand `[[refs]]` in text to resolved `lat.md` section paths with location context. Designed for coding agents to pipe user prompts through before processing. Renamed from `prompt` (which remains as a hidden deprecated alias).
+Expand `[[refs]]` in text to resolved `omni.md` section paths with location context. Designed for coding agents to pipe user prompts through before processing. Renamed from `prompt` (which remains as a hidden deprecated alias).
 
-Usage: `lat expand <text>` or `echo "text" | lat expand`
+Usage: `omni expand <text>` or `echo "text" | omni expand`
 
 For each `[[ref]]` in the input, uses `findSections()` directly (no `resolveRef`):
 
@@ -125,50 +125,50 @@ Implementation: [[src/cli/expand.ts]]
 
 Generate a file to stdout from a built-in template.
 
-Usage: `lat gen <target>`
+Usage: `omni gen <target>`
 
 Supported targets:
 
-- `agents.md` — generate an `AGENTS.md` with instructions for coding agents on how to use `lat.md` in the project
+- `agents.md` — generate an `AGENTS.md` with instructions for coding agents on how to use `omni.md` in the project
 - `claude.md` — alias for `agents.md`
-- `cursor-rules.md` — generate Cursor rules for `.cursor/rules/lat.md`
+- `cursor-rules.md` — generate Cursor rules for `.cursor/rules/omni.md`
 - `pi-extension.ts` — generate the Pi extension template (tools + lifecycle hooks)
-- `skill.md` — generate the Agent Skills spec `SKILL.md` for the `lat-md` skill (authoring guide for `lat.md/` files)
+- `skill.md` — generate the Agent Skills spec `SKILL.md` for the `lat-md` skill (authoring guide for `omni.md/` files)
 
-Output is written to stdout so it can be redirected: `lat gen agents.md > AGENTS.md`.
+Output is written to stdout so it can be redirected: `omni gen agents.md > AGENTS.md`.
 
 Implementation: [[src/cli/gen.ts]]
 
 ## init
 
-Interactive setup wizard. Walks the user through initializing lat.md in a project, with per-agent configuration for multiple coding tools.
+Interactive setup wizard. Walks the user through initializing omni.md in a project, with per-agent configuration for multiple coding tools.
 
-Usage: `lat init [dir]`
+Usage: `omni init [dir]`
 
 Steps:
 
-1. **lat.md/ directory** — if not present, asks whether to create it (via a one-off readline interface that is closed before step 2). Scaffolds from `templates/init/` (`.gitignore` and `README.md`). If it already exists, skips ahead.
+1. **omni.md/ directory** — if not present, asks whether to create it (via a one-off readline interface that is closed before step 2). Scaffolds from `templates/init/` (`.gitignore` and `README.md`). If it already exists, skips ahead.
 2. **Agent selection** — interactive checklist menu ([[src/cli/checklist-menu.ts#checklistMenu]]). All agents are shown at once with `[x]`/`[ ]` checkboxes; the cursor row is highlighted with `chalk.bgCyan`. Keys: up/down (j/k) to move, Space to toggle, Enter to confirm, Ctrl+C to abort. Returns an array of selected agent values. Non-TTY fallback returns `[]`. After confirmation, prints a summary line (e.g. "Selected: Claude Code, Cursor" or dim "None"). **Important:** the persistent readline interface is created _after_ this step — `checklistMenu` puts stdin into raw mode with its own `data` listener, which corrupts any co-existing readline interface.
-3. **Command style** — if any selected agent needs a lat command reference (all except Codex), a `selectMenu` asks "How should agents run lat?" with three options: `lat` (global install, portable), the resolved local binary path, or `npx lat.md@latest` (slow but zero-install). The choice determines what command string is written into hooks, MCP configs, and Pi extensions. Non-interactive mode defaults to `local`. Choosing `global` or `npx` makes generated config files portable and safe to commit.
+3. **Command style** — if any selected agent needs a lat command reference (all except Codex), a `selectMenu` asks "How should agents run lat?" with three options: `lat` (global install, portable), the resolved local binary path, or `npx omni.md@latest` (slow but zero-install). The choice determines what command string is written into hooks, MCP configs, and Pi extensions. Non-interactive mode defaults to `local`. Choosing `global` or `npx` makes generated config files portable and safe to commit.
 4. **AGENTS.md** — created if a non-Claude agent is selected (Cursor, Copilot, Codex). Shared instruction file. Uses marker-based append mode (see below).
 5. **Per-agent setup** — configures each selected agent (see subsections below). Each step prints a brief explanation of _why_ it's needed (e.g. why a hook is used instead of CLAUDE.md, why MCP is registered alongside CLI access).
 6. **LLM key setup** — checks for an existing key (env var or [[cli#Configuration File]]), and if missing, interactively prompts the user to paste one. Explains what semantic search is and why a key is needed before asking.
-7. **Version stamp + file hashes** — writes `INIT_VERSION` and SHA-256 hashes of all template-generated files to `lat.md/.cache/lat_init.json`. On re-run, compares current file content against stored hashes: unmodified files are silently updated to the latest template; user-modified files trigger a Y/n prompt offering to overwrite with the latest template, declining suggests [[cli#gen]].
-8. **Next steps** — after all setup completes, prints agent-specific guidance for having the agent document the codebase. For Claude Code, shows a runnable `claude "..."` command. For IDE agents (Cursor, Copilot, Pi, OpenCode, Codex), shows the prompt to paste into agent chat. Both suggest running `lat check` when done.
+7. **Version stamp + file hashes** — writes `INIT_VERSION` and SHA-256 hashes of all template-generated files to `omni.md/.cache/omni_init.json`. On re-run, compares current file content against stored hashes: unmodified files are silently updated to the latest template; user-modified files trigger a Y/n prompt offering to overwrite with the latest template, declining suggests [[cli#gen]].
+8. **Next steps** — after all setup completes, prints agent-specific guidance for having the agent document the codebase. For Claude Code, shows a runnable `claude "..."` command. For IDE agents (Cursor, Copilot, Pi, OpenCode, Codex), shows the prompt to paste into agent chat. Both suggest running `omni check` when done.
 
 At the very end, after all steps complete, init checks whether ripgrep (`rg`) is available. If missing, prints a tip suggesting the user install it for faster code scanning, with a link to the ripgrep installation guide.
 
-At the very start, before any steps, init prints the ASCII `lat.md` logo (cyan, matching the website) followed by "Checking latest version..." and awaits [[src/version.ts#fetchLatestVersion]] (3s timeout). If a newer version exists, prints an update notice so the user can upgrade before proceeding. If the fetch fails or the version matches, the message is cleared silently.
+At the very start, before any steps, init prints the ASCII `omni.md` logo (cyan, matching the website) followed by "Checking latest version..." and awaits [[src/version.ts#fetchLatestVersion]] (3s timeout). If a newer version exists, prints an update notice so the user can upgrade before proceeding. If the fetch fails or the version matches, the message is cleared silently.
 
 ### Claude Code
 
 Sets up `CLAUDE.md` and two agent hooks for the Claude Code coding agent.
 
 - `CLAUDE.md` — written using marker-based append mode (see below), preserving any user content outside the `%% lat:begin %%` / `%% lat:end %%` markers
-- Hooks synced in `.claude/settings.json` — on every run, all existing lat-owned hook entries are removed, then fresh entries are added for both events. Detection uses three heuristics: `/\blat\b/` in the command string, `hook claude ` substring (catches any install path), or command starting with the current binary path. Non-lat hooks are preserved. Both hooks call [[cli#hook]]:
-  - `UserPromptSubmit` → `lat hook claude UserPromptSubmit` — injects lat.md workflow reminders, auto-resolves `[[refs]]` in the prompt
-  - `Stop` → `lat hook claude Stop` — reminds the agent to update `lat.md/` before finishing
-- `.claude/skills/lat-md/SKILL.md` — skill spec generated from `templates/skill/SKILL.md`. Teaches the agent how to author and maintain `lat.md/` files. Claude Code discovers it automatically from `.claude/skills/`.
+- Hooks synced in `.claude/settings.json` — on every run, all existing lat-owned hook entries are removed, then fresh entries are added for both events. Detection uses three heuristics: `/\blat\b/` in the command string, `hook claude ` substring (catches any install path), or command starting with the current binary path. Non-omni hooks are preserved. Both hooks call [[cli#hook]]:
+  - `UserPromptSubmit` → `omni hook claude UserPromptSubmit` — injects omni.md workflow reminders, auto-resolves `[[refs]]` in the prompt
+  - `Stop` → `omni hook claude Stop` — reminds the agent to update `omni.md/` before finishing
+- `.claude/skills/lat-md/SKILL.md` — skill spec generated from `templates/skill/SKILL.md`. Teaches the agent how to author and maintain `omni.md/` files. Claude Code discovers it automatically from `.claude/skills/`.
 - `.claude` directory added to `.gitignore` (settings contain local absolute paths in hook commands)
 - [[cli#mcp]] server registered in `.mcp.json` at the project root (added to `.gitignore` since it contains absolute paths)
 
@@ -177,18 +177,18 @@ Sets up `CLAUDE.md` and two agent hooks for the Claude Code coding agent.
 Sets up a Pi extension that registers lat tools as native Pi tools and hooks into the agent lifecycle.
 
 - `AGENTS.md` — shared instruction file (created in the shared step)
-- `.pi/extensions/lat.ts` — TypeScript extension generated from `templates/pi-extension.ts` with the full invocation command injected. `resolveLatBin()` in `init.ts` reconstructs exactly how the process was started: for compiled binaries it's just the binary path; for `.ts` source files run via tsx it captures `node <execArgv> <script>` so the same loader flags are replayed. Registers six tools (`lat_search`, `lat_section`, `lat_locate`, `lat_check`, `lat_expand`, `lat_refs`) that shell out to the `lat` CLI. Each tool provides a `renderCall` method so the Pi TUI displays the query/parameters inline in the tool call header (e.g. `lat search "query text"`). The `lat_search` and `lat_section` tools also provide a `renderResult` method that shows a collapsed preview (first 4 lines) by default and renders the full output as styled markdown (via pi's `Markdown` component and `getMarkdownTheme()`) when expanded via Ctrl+O (`expandTools` keybinding). Registers custom message renderers for `lat-reminder` and `lat-check` that show a collapsed one-liner by default and expand to full markdown-rendered content on Ctrl+O. Hooks into `before_agent_start` (injects a visible search reminder via `customType` message with `display: true`) and `agent_end` (runs `lat check` + diff analysis, sends a visible follow-up message if something needs fixing).
-- `.pi/skills/lat-md/SKILL.md` — skill spec generated from `templates/skill/SKILL.md`. Teaches the agent how to author and maintain `lat.md/` files (section structure, wiki links, code refs, test specs). Pi discovers it automatically from the `.pi/skills/` directory.
+- `.pi/extensions/lat.ts` — TypeScript extension generated from `templates/pi-extension.ts` with the full invocation command injected. `resolveLatBin()` in `init.ts` reconstructs exactly how the process was started: for compiled binaries it's just the binary path; for `.ts` source files run via tsx it captures `node <execArgv> <script>` so the same loader flags are replayed. Registers six tools (`omni_search`, `omni_section`, `omni_locate`, `omni_check`, `omni_expand`, `omni_refs`) that shell out to the `lat` CLI. Each tool provides a `renderCall` method so the Pi TUI displays the query/parameters inline in the tool call header (e.g. `omni search "query text"`). The `omni_search` and `omni_section` tools also provide a `renderResult` method that shows a collapsed preview (first 4 lines) by default and renders the full output as styled markdown (via pi's `Markdown` component and `getMarkdownTheme()`) when expanded via Ctrl+O (`expandTools` keybinding). Registers custom message renderers for `lat-reminder` and `lat-check` that show a collapsed one-liner by default and expand to full markdown-rendered content on Ctrl+O. Hooks into `before_agent_start` (injects a visible search reminder via `customType` message with `display: true`) and `agent_end` (runs `omni check` + diff analysis, sends a visible follow-up message if something needs fixing).
+- `.pi/skills/lat-md/SKILL.md` — skill spec generated from `templates/skill/SKILL.md`. Teaches the agent how to author and maintain `omni.md/` files (section structure, wiki links, code refs, test specs). Pi discovers it automatically from the `.pi/skills/` directory.
 - `.pi` directory added to `.gitignore` (extension and skills contain local paths)
 
 ### Cursor
 
 Sets up `.cursor/rules`, a Cursor stop hook, and the MCP server for Cursor.
 
-- `.cursor/rules/lat.md` — rules file generated from `templates/cursor-rules.md`, references MCP tools instead of CLI commands
-- `.cursor/hooks.json` — generated stop hook config (`version: 1`) that runs `lat hook cursor stop`. It enforces the end-of-task `lat check` and `lat.md/` sync reminder in Cursor's native hook format.
+- `.cursor/rules/omni.md` — rules file generated from `templates/cursor-rules.md`, references MCP tools instead of CLI commands
+- `.cursor/hooks.json` — generated stop hook config (`version: 1`) that runs `omni hook cursor stop`. It enforces the end-of-task `omni check` and `omni.md/` sync reminder in Cursor's native hook format.
 - [[cli#mcp]] server registered in `.cursor/mcp.json`
-- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `lat.md/` files, placed in the cross-agent standard skills directory
+- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `omni.md/` files, placed in the cross-agent standard skills directory
 
 The `.cursor` directory is added to `.gitignore` because its hooks and MCP config may contain local paths. Cursor still relies on rules plus MCP for prompt-time search guidance because its hooks do not reliably inject prompt-specific context the way Claude/Pi integrations do.
 
@@ -198,15 +198,15 @@ Sets up `copilot-instructions.md` and registers the MCP server for VS Code Copil
 
 - `.github/copilot-instructions.md` — instructions file written using marker-based append mode, preserving any user content outside the markers
 - [[cli#mcp]] server registered in `.vscode/mcp.json`
-- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `lat.md/` files, placed in the cross-agent standard skills directory
+- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `omni.md/` files, placed in the cross-agent standard skills directory
 
 ### OpenCode
 
 Sets up an OpenCode plugin that registers lat tools as native OpenCode tools and hooks into the session lifecycle.
 
 - `AGENTS.md` — shared instruction file (created in the shared step)
-- `.opencode/plugins/lat.ts` — TypeScript plugin generated from `templates/opencode-plugin.ts` with the lat invocation command injected. Uses `@opencode-ai/plugin` to register six tools (`lat_search`, `lat_section`, `lat_locate`, `lat_check`, `lat_expand`, `lat_refs`) that shell out to the `lat` CLI. Hooks into `session.idle` (runs `lat check` + diff analysis, logs a warning via `client.app.log` if something needs fixing).
-- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `lat.md/` files, placed in the cross-agent standard skills directory
+- `.opencode/plugins/lat.ts` — TypeScript plugin generated from `templates/opencode-plugin.ts` with the lat invocation command injected. Uses `@opencode-ai/plugin` to register six tools (`omni_search`, `omni_section`, `omni_locate`, `omni_check`, `omni_expand`, `omni_refs`) that shell out to the `lat` CLI. Hooks into `session.idle` (runs `omni check` + diff analysis, logs a warning via `client.app.log` if something needs fixing).
+- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `omni.md/` files, placed in the cross-agent standard skills directory
 - `.opencode` directory added to `.gitignore` (plugin contains local absolute paths)
 
 ### Codex
@@ -216,7 +216,7 @@ Sets up AGENTS.md, registers the MCP server, and installs skills for the Codex C
 - `AGENTS.md` — shared instruction file (created in the shared step)
 - [[cli#mcp]] server registered in `.codex/config.toml` as a `[mcp_servers.lat]` TOML table
 - `.codex` directory added to `.gitignore` (config contains local absolute paths)
-- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `lat.md/` files, placed in the cross-agent standard skills directory
+- `.agents/skills/lat-md/SKILL.md` — skill spec for authoring `omni.md/` files, placed in the cross-agent standard skills directory
 - `.codex/skills/lat-md/SKILL.md` — same skill spec in Codex's native skills directory
 
 All setup steps are idempotent — existing configuration is detected and skipped.
@@ -237,17 +237,17 @@ User-level configuration is stored in `~/.config/lat/config.json` (XDG Base Dire
 
 Currently supports one field:
 
-- `llm_key` — embedding API key for semantic search, used when `LAT_LLM_KEY` env var is not set
+- `llm_key` — embedding API key for semantic search, used when `OMNI_LLM_KEY` env var is not set
 
-Key resolution order: `LAT_LLM_KEY` > `LAT_LLM_KEY_FILE` > `LAT_LLM_KEY_HELPER` > config file `llm_key`. This applies everywhere: `lat search`, `lat check`, and the MCP `lat_search` tool.
+Key resolution order: `OMNI_LLM_KEY` > `OMNI_LLM_KEY_FILE` > `OMNI_LLM_KEY_HELPER` > config file `llm_key`. This applies everywhere: `omni search`, `omni check`, and the MCP `omni_search` tool.
 
 Implementation: [[src/config.ts]]
 
 ## hook
 
-Handle agent hook events. Called by agent hooks configured during `lat init`, not directly by users.
+Handle agent hook events. Called by agent hooks configured during `omni init`, not directly by users.
 
-Usage: `lat hook <agent> <event>`
+Usage: `omni hook <agent> <event>`
 
 Currently supports:
 
@@ -258,8 +258,8 @@ Currently supports:
 
 Reads the hook input from stdin (JSON with `user_prompt`). Outputs JSON with `additionalContext` containing:
 
-1. A directive to ALWAYS run `lat search` on the user's intent before starting work — even for seemingly straightforward tasks — because search may reveal critical design details, protocols, or constraints. Includes a hard gate: do not read files, write code, or run commands until search is done.
-2. A reminder that `lat.md/` must stay in sync with the codebase — update relevant sections and run `lat check` before finishing.
+1. A directive to ALWAYS run `omni search` on the user's intent before starting work — even for seemingly straightforward tasks — because search may reveal critical design details, protocols, or constraints. Includes a hard gate: do not read files, write code, or run commands until search is done.
+2. A reminder that `omni.md/` must stay in sync with the codebase — update relevant sections and run `omni check` before finishing.
 3. If the prompt contains `[[refs]]`, resolves them inline using [[src/cli/expand.ts#expandPrompt]]
 4. Runs [[src/cli/search.ts#runSearch]] on the user prompt, then [[src/cli/section.ts#getSection]] + [[src/cli/section.ts#formatSectionOutput]] on each result — the agent gets full section content with outgoing/incoming refs before it starts work. Gracefully degrades if no LLM key is configured.
 
@@ -267,54 +267,54 @@ Reads the hook input from stdin (JSON with `user_prompt`). Outputs JSON with `ad
 
 Conditionally blocks the agent from stopping — only when something is actually wrong.
 
-1. **No `lat.md/` dir** — exit silently.
-2. **Run `lat check`** — always, on both first and second pass.
+1. **No `omni.md/` dir** — exit silently.
+2. **Run `omni check`** — always, on both first and second pass.
 3. **Second pass** (`stop_hook_active` true) — if check still fails, print warning to stderr (no block, loop stops). If check passes, exit silently.
 4. **First pass** — run `git diff HEAD --numstat`. Count `codeLines` (files matching [[src/source-parser.ts#SOURCE_EXTENSIONS]]) and `latMdLines`. Skip ratio check if `codeLines < 5` or `latMdLines >= 50` (enough doc work was clearly done). Otherwise round `latMdLines` up to 1 (if nonzero) and flag `needsSync` when `latMdLines < codeLines * 5%`.
-5. **Decision** — both pass: exit silently, clean output. Check failed + needs sync: block ("update `lat.md/`, then run `lat check` until it passes"). Check failed only: block ("run `lat check` until it passes"). Needs sync only: block with explicit context ("not updated" when 0 lat.md lines, "may not be fully in sync (N lines)" when some changes exist but below ratio).
+5. **Decision** — both pass: exit silently, clean output. Check failed + needs sync: block ("update `omni.md/`, then run `omni check` until it passes"). Check failed only: block ("run `omni check` until it passes"). Needs sync only: block with explicit context ("not updated" when 0 omni.md lines, "may not be fully in sync (N lines)" when some changes exist but below ratio).
 
 ### cursor stop
 
-Runs the same `lat check` and diff analysis as Claude's `Stop` hook, but emits Cursor's `followup_message` payload instead of Claude's block response so the agent continues its loop in Cursor.
+Runs the same `omni check` and diff analysis as Claude's `Stop` hook, but emits Cursor's `followup_message` payload instead of Claude's block response so the agent continues its loop in Cursor.
 
 Implementation: [[src/cli/hook.ts]]
 
 ## mcp
 
-Start the MCP (Model Context Protocol) server over stdio. Exposes lat.md tools to any MCP-capable coding agent (Claude Code, Cursor, VS Code Copilot).
+Start the MCP (Model Context Protocol) server over stdio. Exposes omni.md tools to any MCP-capable coding agent (Claude Code, Cursor, VS Code Copilot).
 
-Usage: `lat mcp`
+Usage: `omni mcp`
 
-Clients invoke this as `lat mcp`. The `lat init` wizard registers the MCP server using the absolute path to the current `lat` binary, so it works regardless of how `lat` was installed. The server exposes six tools:
+Clients invoke this as `omni mcp`. The `omni init` wizard registers the MCP server using the absolute path to the current `lat` binary, so it works regardless of how `lat` was installed. The server exposes six tools:
 
-- **lat_locate** — find sections by name (wraps [[cli#locate]])
-- **lat_section** — show section content with outgoing/incoming refs (wraps [[cli#section]])
-- **lat_search** — semantic search across sections (wraps [[cli#search]])
-- **lat_expand** — expand `[[refs]]` in text (wraps [[cli#expand]])
-- **lat_check** — validate links and code refs (wraps [[cli#check]])
-- **lat_refs** — find references to a section (wraps [[cli#refs]])
+- **omni_locate** — find sections by name (wraps [[cli#locate]])
+- **omni_section** — show section content with outgoing/incoming refs (wraps [[cli#section]])
+- **omni_search** — semantic search across sections (wraps [[cli#search]])
+- **omni_expand** — expand `[[refs]]` in text (wraps [[cli#expand]])
+- **omni_check** — validate links and code refs (wraps [[cli#check]])
+- **omni_refs** — find references to a section (wraps [[cli#refs]])
 
-Each MCP tool calls the same command function as the CLI (e.g. `locateCommand`, `refsCommand`, `searchCommand`), passing a `CmdContext` with `plainStyler` and `mode: 'mcp'`. The `toMcp()` helper converts `CmdResult` to MCP response format. Uses `@modelcontextprotocol/sdk` with stdio transport. Resolves `lat.md/` from cwd.
+Each MCP tool calls the same command function as the CLI (e.g. `locateCommand`, `refsCommand`, `searchCommand`), passing a `CmdContext` with `plainStyler` and `mode: 'mcp'`. The `toMcp()` helper converts `CmdResult` to MCP response format. Uses `@modelcontextprotocol/sdk` with stdio transport. Resolves `omni.md/` from cwd.
 
 Implementation: [[src/mcp/server.ts]]
 
 ## search
 
-Semantic search across `lat.md` sections using vector embeddings.
+Semantic search across `omni.md` sections using vector embeddings.
 
-Usage: `lat search [query] [--limit=5] [--reindex]`
+Usage: `omni search [query] [--limit=5] [--reindex]`
 
-Query is optional — `lat search --reindex` re-indexes without searching. Results include a navigation hint footer suggesting `lat locate`, `lat refs`, and `lat search` for further exploration — this makes the tools self-documenting so agents discover them organically.
+Query is optional — `omni search --reindex` re-indexes without searching. Results include a navigation hint footer suggesting `omni locate`, `omni refs`, and `omni search` for further exploration — this makes the tools self-documenting so agents discover them organically.
 
-Core search logic in [[src/cli/search.ts#runSearch]] (returns matched sections), used by both the CLI command and [[cli#mcp]] `lat_search` tool. Indexing and embedding internals in `src/search/`.
+Core search logic in [[src/cli/search.ts#runSearch]] (returns matched sections), used by both the CLI command and [[cli#mcp]] `omni_search` tool. Indexing and embedding internals in `src/search/`.
 
 ### Provider Detection
 
 Requires an LLM key resolved by [[src/config.ts#getLlmKey]] in priority order:
 
-1. `LAT_LLM_KEY` env var — direct value
-2. `LAT_LLM_KEY_FILE` env var — path to a file containing the key (read and trimmed)
-3. `LAT_LLM_KEY_HELPER` env var — shell command that prints the key to stdout (10 s timeout)
+1. `OMNI_LLM_KEY` env var — direct value
+2. `OMNI_LLM_KEY_FILE` env var — path to a file containing the key (read and trimmed)
+3. `OMNI_LLM_KEY_HELPER` env var — shell command that prints the key to stdout (10 s timeout)
 4. `llm_key` from config file (see [[cli#Configuration File]])
 
 Provider is auto-detected from the resolved key prefix:
@@ -322,7 +322,7 @@ Provider is auto-detected from the resolved key prefix:
 - `sk-...` — OpenAI (uses `text-embedding-3-small`, 1536 dims)
 - `vck_...` — Vercel AI Gateway (uses `openai/text-embedding-3-small`, 1536 dims)
 - `sk-ant-...` — Anthropic (not supported, errors with guidance)
-- `REPLAY_LAT_LLM_KEY::<url>` — test-only replay server for offline testing
+- `REPLAY_OMNI_LLM_KEY::<url>` — test-only replay server for offline testing
 
 Implementation: [[src/search/provider.ts]], [[src/config.ts]]
 
@@ -338,7 +338,7 @@ Uses `@libsql/client` (Turso's libsql) in local file mode — pure JS/WASM, no n
 
 Single `sections` table holds metadata, content, content hash, and the embedding vector. No separate vector table needed.
 
-The database is stored at `lat.md/.cache/vectors.db` and should not be committed (included in `.gitignore` template).
+The database is stored at `omni.md/.cache/vectors.db` and should not be committed (included in `.gitignore` template).
 
 Implementation: [[src/search/db.ts]]
 

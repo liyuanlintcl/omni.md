@@ -1,18 +1,18 @@
 ---
-name: lat-md
+name: omni-md
 description: >-
-  Writing and maintaining lat.md documentation files — structured markdown that
+  Writing and maintaining omni.md documentation files — structured markdown that
   describes a project's architecture, design decisions, and test specs. Use when
-  creating, editing, or reviewing files in the lat.md/ directory.
+  creating, editing, or reviewing files in the omni.md/ directory.
 ---
 
-# lat.md Authoring Guide
+# omni.md Authoring Guide
 
-This skill covers the syntax, structure rules, and conventions for writing `lat.md/` files. Load it whenever you need to create or edit sections in the `lat.md/` directory.
+This skill covers the syntax, structure rules, and conventions for writing `omni.md/` files. Load it whenever you need to create or edit sections in the `omni.md/` directory.
 
-## What belongs in lat.md
+## What belongs in omni.md
 
-`lat.md/` files describe **what** the project does and **why** — domain concepts, key design decisions, business logic, and test specifications. They do NOT duplicate source code. Think of each section as an anchor that source code references back to.
+`omni.md/` files describe **what** the project does and **why** — domain concepts, key design decisions, business logic, and test specifications. They do NOT duplicate source code. Think of each section as an anchor that source code references back to.
 
 Good candidates for sections:
 - Architecture decisions and their rationale
@@ -52,16 +52,16 @@ Details about this child topic.
 This is invalid — "Bad Section" has no leading paragraph.
 ```
 
-`lat check` enforces this rule.
+`omni check` enforces this rule.
 
 ## Section IDs
 
 Sections are addressed by file path and heading chain:
 
-- **Full form**: `lat.md/path/to/file#Heading#SubHeading`
+- **Full form**: `omni.md/path/to/file#Heading#SubHeading`
 - **Short form**: `file#Heading#SubHeading` (when the file stem is unique)
 
-Examples: `lat.md/tests/search#RAG Replay Tests`, `cli#init`, `parser#Wiki Links`.
+Examples: `omni.md/tests/search#RAG Replay Tests`, `cli#init`, `parser#Wiki Links`.
 
 ## Wiki links
 
@@ -87,30 +87,30 @@ Reference functions, classes, constants, and methods in source files:
 [[src/app.h#Greeter]]                   — C struct
 ```
 
-`lat check` validates that all targets exist.
+`omni check` validates that all targets exist.
 
 ## Code refs
 
-Tie source code back to `lat.md/` sections with `@lat:` comments:
+Tie source code back to `omni.md/` sections with `@omni:` comments:
 
 ```typescript
-// @lat: [[cli#init]]
+// @omni: [[cli#init]]
 export function init() { ... }
 ```
 
 ```python
-# @lat: [[cli#init]]
+# @omni: [[cli#init]]
 def init():
     ...
 ```
 
 Supported comment styles: `//` (JS/TS/Rust/Go/C) and `#` (Python).
 
-Place one `@lat:` comment per section, at the relevant code — not at the top of the file.
+Place one `@omni:` comment per section, at the relevant code — not at the top of the file.
 
 ## Test specs
 
-Describe tests as sections in `lat.md/` files. Add frontmatter to require that every leaf section has a matching `@lat:` comment in test code:
+Describe tests as sections in `omni.md/` files. Add frontmatter to require that every leaf section has a matching `@omni:` comment in test code:
 
 ```markdown
 ---
@@ -137,19 +137,19 @@ Login request without a password field returns 400 with a descriptive error.
 Each test references its spec:
 
 ```python
-# @lat: [[tests#User login#Rejects expired tokens]]
+# @omni: [[tests#User login#Rejects expired tokens]]
 def test_rejects_expired_tokens():
     ...
 ```
 
 Rules:
-- Every leaf section under `require-code-mention: true` must be referenced by exactly one `@lat:` comment
+- Every leaf section under `require-code-mention: true` must be referenced by exactly one `@omni:` comment
 - Every section MUST have a description — at least one sentence explaining what the test verifies and why
-- `lat check` flags unreferenced specs and dangling code refs
+- `omni check` flags unreferenced specs and dangling code refs
 
 ## Frontmatter
 
-Optional YAML frontmatter at the top of `lat.md/` files:
+Optional YAML frontmatter at the top of `omni.md/` files:
 
 ```yaml
 ---
@@ -162,8 +162,8 @@ Currently the only supported field is `require-code-mention` for test spec enfor
 
 ## Validation
 
-Always run `lat check` after editing `lat.md/` files. It validates:
+Always run `omni check` after editing `omni.md/` files. It validates:
 - All wiki links point to existing sections or source code symbols
-- All `@lat:` code refs point to existing sections
+- All `@omni:` code refs point to existing sections
 - Every section has a leading paragraph (≤250 chars)
 - All `require-code-mention` leaf sections are referenced in code

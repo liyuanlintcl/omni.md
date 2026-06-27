@@ -1,11 +1,11 @@
-name: lat check
+name: omni check
 on: [push, pull_request]
 
 permissions:
   contents: read
 
 jobs:
-  lat-check:
+  omni-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

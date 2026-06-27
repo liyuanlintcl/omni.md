@@ -7,10 +7,10 @@ import {
   extractRefs,
   buildFileIndex,
   resolveRef,
-  listLatticeFiles,
+  listOmniFiles,
   type Section,
   type SectionMatch,
-} from '../lattice.js';
+} from '../omnidoc.js';
 import { scanCodeRefs } from '../code-refs.js';
 import { SOURCE_EXTENSIONS, resolveSourceSymbol } from '../source-parser.js';
 import type { CmdContext, CmdResult } from '../context.js';
@@ -160,7 +160,7 @@ export async function getSection(
 
   // Find incoming references: other sections that link to this one
   const incomingRefs: SectionMatch[] = [];
-  const files = await listLatticeFiles(ctx.latDir);
+  const files = await listOmniFiles(ctx.latDir);
   const incomingSections = new Set<string>();
 
   for (const file of files) {
@@ -185,7 +185,7 @@ export async function getSection(
     }
   }
 
-  // Find code back-references: @lat: comments pointing to this section
+  // Find code back-references: @omni: comments pointing to this section
   const codeRefs: CodeBackRef[] = [];
   const { refs: scannedRefs } = await scanCodeRefs(ctx.projectRoot);
   for (const ref of scannedRefs) {

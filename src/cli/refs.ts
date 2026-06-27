@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import {
-  listLatticeFiles,
+  listOmniFiles,
   loadAllSections,
   findSections,
   extractRefs,
@@ -11,7 +11,7 @@ import {
   resolveRef,
   type Section,
   type SectionMatch,
-} from '../lattice.js';
+} from '../omnidoc.js';
 import { formatResultList } from '../format.js';
 import { scanCodeRefs } from '../code-refs.js';
 import type { CmdContext, CmdResult } from '../context.js';
@@ -63,7 +63,7 @@ function isSourceQuery(
 }
 
 /**
- * Find references to a source file or symbol across lat.md and code files.
+ * Find references to a source file or symbol across omni.md and code files.
  * For file-level queries (no #symbol), matches all wiki links targeting
  * that file or any symbol in it.
  */
@@ -126,7 +126,7 @@ async function findSourceRefs(
   const codeRefs: string[] = [];
 
   if (scope === 'md' || scope === 'md+code') {
-    const files = await listLatticeFiles(latDir);
+    const files = await listOmniFiles(latDir);
     const matchingFromSections = new Set<string>();
     for (const file of files) {
       const content = await readFile(file, 'utf-8');
@@ -222,7 +222,7 @@ export async function findRefs(
   const codeRefs: string[] = [];
 
   if (scope === 'md' || scope === 'md+code') {
-    const files = await listLatticeFiles(ctx.latDir);
+    const files = await listOmniFiles(ctx.latDir);
     const matchingFromSections = new Set<string>();
     for (const file of files) {
       const content = await readFile(file, 'utf-8');

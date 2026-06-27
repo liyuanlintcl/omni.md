@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { Client } from '@libsql/client';
-import { loadAllSections, flattenSections, type Section } from '../lattice.js';
+import { loadAllSections, flattenSections, type Section } from '../omnidoc.js';
 import { embed } from './embeddings.js';
 import type { EmbeddingProvider } from './provider.js';
 

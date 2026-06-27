@@ -1,5 +1,5 @@
 import { join, relative } from 'node:path';
-import type { Section, SectionMatch } from './lattice.js';
+import type { Section, SectionMatch } from './omnidoc.js';
 import type { CmdContext, Styler } from './context.js';
 
 export function formatSectionId(id: string, s: Styler): string {
@@ -59,9 +59,9 @@ export function formatNavHints(ctx: CmdContext): string {
   const s = ctx.styler;
   const hints =
     ctx.mode === 'cli'
-      ? `${s.dim('*')} \`lat section "section#id"\` \u2014 show full content with outgoing/incoming refs\n` +
-        `${s.dim('*')} \`lat search "new query"\` \u2014 search for something else`
-      : `${s.dim('*')} \`lat_section\` \u2014 show full content with outgoing/incoming refs\n` +
-        `${s.dim('*')} \`lat_search\` \u2014 search for something else`;
+      ? `${s.dim('*')} \`omni section "section#id"\` \u2014 show full content with outgoing/incoming refs\n` +
+        `${s.dim('*')} \`omni search "new query"\` \u2014 search for something else`
+      : `${s.dim('*')} \`omni_section\` \u2014 show full content with outgoing/incoming refs\n` +
+        `${s.dim('*')} \`omni_search\` \u2014 search for something else`;
   return `\n## To navigate further:\n\n${hints}`;
 }

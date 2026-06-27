@@ -1,0 +1,1 @@
+This directory defines the high-level concepts, business logic, and architecture of this project using markdown. It is managed by [omni.md](https://www.npmjs.com/package/omni.md) — a tool that anchors source code to these definitions. Install the `lat` command with `npm i -g omni.md` and run `lat --help`.

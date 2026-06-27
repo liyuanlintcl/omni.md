@@ -1,12 +1,12 @@
 # Markdown
 
-Extensions to standard markdown used in `lat.md` files.
+Extensions to standard markdown used in `omni.md` files.
 
 ## Wiki Links
 
 Obsidian-style links: `[[target]]` or `[[target|alias]]`. Uses `|` as the alias divider.
 
-Targets are section ids — hierarchical paths like `lat.md/dev-process#Testing#Running Tests`. The vault root is the project directory (the parent of `lat.md/`), so all markdown section ids include the `lat.md/` prefix. Wiki links can also reference source code symbols — see [[markdown#Wiki Links#Source Code Links]].
+Targets are section ids — hierarchical paths like `omni.md/dev-process#Testing#Running Tests`. The vault root is the project directory (the parent of `omni.md/`), so all markdown section ids include the `omni.md/` prefix. Wiki links can also reference source code symbols — see [[markdown#Wiki Links#Source Code Links]].
 
 Validated by [[cli#check#md]].
 
@@ -20,15 +20,15 @@ Aligned with Obsidian conventions:
 
 ### Short Path Disambiguation
 
-Short refs are supported for markdown files inside `lat.md/` only. When a file stem is unique across the vault, it can be used without its directory prefix.
+Short refs are supported for markdown files inside `omni.md/` only. When a file stem is unique across the vault, it can be used without its directory prefix.
 
-For example, `[[setup#Install]]` resolves to `lat.md/guides/setup#Install` if `setup.md` only exists under `lat.md/guides/`.
+For example, `[[setup#Install]]` resolves to `omni.md/guides/setup#Install` if `setup.md` only exists under `omni.md/guides/`.
 
 When multiple files share the same stem (e.g. `alpha/notes.md` and `beta/notes.md`), the short form is ambiguous — [[cli#check#md]] reports an error listing all candidates. If the referenced section exists in only one file, the error suggests the specific fix.
 
 Source code references (e.g. `[[src/config.ts#getConfigDir]]`) always require the full path — no short refs for source files.
 
-Resolution is handled by [[src/lattice.ts#resolveRef]]. See [[parser#Short Ref Resolution]] for implementation details.
+Resolution is handled by [[src/omnidoc.ts#resolveRef]]. See [[parser#Short Ref Resolution]] for implementation details.
 
 ### Source Code Links
 
@@ -44,7 +44,7 @@ Wiki links can reference symbols in TypeScript, JavaScript, Python, Rust, Go, an
 
 Supported extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.rs`, `.go`, `.c`, `.h`.
 
-Python symbols: functions, classes, methods, module-level variables. Decorated definitions (`@decorator`) are unwrapped transparently — `[[file.py#my_func]]` resolves whether or not `my_func` has decorators, and `# @lat:` comments placed between decorators and the `def`/`class` line are scanned normally.
+Python symbols: functions, classes, methods, module-level variables. Decorated definitions (`@decorator`) are unwrapped transparently — `[[file.py#my_func]]` resolves whether or not `my_func` has decorators, and `# @omni:` comments placed between decorators and the `def`/`class` line are scanned normally.
 
 Rust symbols: functions, structs, enums, traits, impl methods, consts, statics, type aliases. Methods are resolved via `impl` blocks — `[[file.rs#Type#method]]` matches any `impl Type { fn method() }` or `impl Trait for Type { fn method() }`.
 
@@ -56,9 +56,9 @@ Source code is parsed lazily with tree-sitter (via `web-tree-sitter`). Only file
 
 ### Strict vs Lenient Contexts
 
-**Strict** — `lat check` and `lat refs` use `resolveRef()` directly. Links must resolve unambiguously to a known section. Ambiguous or broken links are errors.
+**Strict** — `omni check` and `omni refs` use `resolveRef()` directly. Links must resolve unambiguously to a known section. Ambiguous or broken links are errors.
 
-**Lenient** — `lat locate` and `lat expand` use `findSections()`, which applies tiered matching (exact → file stem → subsection tail → fuzzy). These commands are for interactive exploration and accept approximate queries.
+**Lenient** — `omni locate` and `omni expand` use `findSections()`, which applies tiered matching (exact → file stem → subsection tail → fuzzy). These commands are for interactive exploration and accept approximate queries.
 
 ## Leading Paragraph
 
@@ -70,7 +70,7 @@ Validated by [[cli#check#sections]].
 
 ## Frontmatter
 
-`lat.md` files support YAML frontmatter for per-file configuration:
+`omni.md` files support YAML frontmatter for per-file configuration:
 
 ```yaml
 ---
@@ -81,4 +81,4 @@ lat:
 
 ### require-code-mention
 
-When set to `true`, [[cli#check#code-refs]] ensures every leaf section (sections with no children) in the file has a corresponding `// @lat: [[...]]` reference in source code. Useful for test specs and requirements that must be traceable to implementation.
+When set to `true`, [[cli#check#code-refs]] ensures every leaf section (sections with no children) in the file has a corresponding `// @omni: [[...]]` reference in source code. Useful for test specs and requirements that must be traceable to implementation.

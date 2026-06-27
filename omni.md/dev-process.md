@@ -1,6 +1,6 @@
 # Dev Process
 
-Development workflow, tooling, and conventions for the lat.md project.
+Development workflow, tooling, and conventions for the omni.md project.
 
 ## Tooling
 
@@ -16,7 +16,7 @@ Vitest is the test runner. Tests live in the top-level `tests/` directory.
 
 ### Test Structure
 
-Tests use fixture directories under `tests/cases/`, each a self-contained mini-project with its own `lat.md/` and source files.
+Tests use fixture directories under `tests/cases/`, each a self-contained mini-project with its own `omni.md/` and source files.
 
 See [[tests#Conventions]] for testing principles. The test harness in `tests/cases.test.ts` provides helpers (`caseDir()`, `latDir()`) to point `lat` functions at a given fixture.
 
@@ -37,11 +37,11 @@ All directory walking goes through [[src/walk.ts#walkEntries]], the single entry
 
 It wraps the `ignore-walk` npm package to ensure `.gitignore` rules are consistently honored everywhere. Results are not cached — each call re-walks the filesystem, which is necessary for long-lived processes like the MCP server.
 
-[[src/code-refs.ts#walkFiles]] calls `walkEntries()` then additionally skips `.md` files, `lat.md/`, `.claude/`, and sub-projects (directories containing their own `lat.md/`).
+[[src/code-refs.ts#walkFiles]] calls `walkEntries()` then additionally skips `.md` files, `omni.md/`, `.claude/`, and sub-projects (directories containing their own `omni.md/`).
 
-[[src/code-refs.ts#scanCodeRefs]] uses a two-tier strategy for finding `@lat:` comments: it first tries `rg` (ripgrep), falling back to a pure TypeScript implementation. When rg is available, it handles both searching and file listing — `walkFiles` is not called. Exclusions for `lat.md/`, `.claude/`, `*.md`, and sub-projects are passed as `--glob` args to rg. Sub-projects are detected upfront via `rg --files` (directories containing a nested `lat.md/`). The TS fallback uses `walkFiles` for both file discovery and exclusion filtering. `CodeRef.file` is always stored as a projectRoot-relative path; consumers convert to cwd-relative only at display time. Setting `_LAT_DISABLE_RG=1` forces the TS fallback; used in tests to cover both paths.
+[[src/code-refs.ts#scanCodeRefs]] uses a two-tier strategy for finding `@omni:` comments: it first tries `rg` (ripgrep), falling back to a pure TypeScript implementation. When rg is available, it handles both searching and file listing — `walkFiles` is not called. Exclusions for `omni.md/`, `.claude/`, `*.md`, and sub-projects are passed as `--glob` args to rg. Sub-projects are detected upfront via `rg --files` (directories containing a nested `omni.md/`). The TS fallback uses `walkFiles` for both file discovery and exclusion filtering. `CodeRef.file` is always stored as a projectRoot-relative path; consumers convert to cwd-relative only at display time. Setting `_LAT_DISABLE_RG=1` forces the TS fallback; used in tests to cover both paths.
 
-[[src/cli/check.ts#checkIndex]] calls `walkEntries()` on the `lat.md/` directory itself to discover visible entries for index validation.
+[[src/cli/check.ts#checkIndex]] calls `walkEntries()` on the `omni.md/` directory itself to discover visible entries for index validation.
 
 ## Formatting
 
@@ -49,7 +49,7 @@ Prettier with no semicolons, single quotes, trailing commas. Run `pnpm format` b
 
 ## Publishing
 
-Published to npm as `lat.md`. The `bin` entry exposes the `lat` command. Only `dist/src` is included in the package — tests and the [[website]] are excluded.
+Published to npm as `omni.md`. The `bin` entry exposes the `lat` command. Only `dist/src` is included in the package — tests and the [[website]] are excluded.
 
 ### Release Process
 
@@ -75,5 +75,5 @@ GitHub Actions workflow at `.github/workflows/publish.yml`. Runs on every push t
 3. **Publish to npm** — `pnpm publish --no-git-checks` using the `NPM_TOKEN` repository secret
 4. **Create GitHub release** — tags `vX.Y.Z` and creates a GitHub release with auto-generated notes
 
-Uses npm trusted publishing (OIDC) — no secrets needed. The `--provenance` flag signs and publishes the package using the GitHub Actions identity. The `lat.md` package is linked to the `1st1/lat.md` repo on npmjs.com under Settings → Publishing Access.
- using the GitHub Actions identity. The `lat.md` package is linked to the `1st1/lat.md` repo on npmjs.com under Settings → Publishing Access.
+Uses npm trusted publishing (OIDC) — no secrets needed. The `--provenance` flag signs and publishes the package using the GitHub Actions identity. The `omni.md` package is linked to the `1st1/omni.md` repo on npmjs.com under Settings → Publishing Access.
+ using the GitHub Actions identity. The `omni.md` package is linked to the `1st1/omni.md` repo on npmjs.com under Settings → Publishing Access.

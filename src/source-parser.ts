@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
-import type { Section } from './lattice.js';
+import type { Section } from './omnidoc.js';
 import {
   Parser,
   Language,
@@ -883,7 +883,7 @@ export function clearSymbolCache(): void {
 
 /**
  * Check whether a source file path (relative to projectRoot) has a given symbol.
- * Used by lat check to validate source code wiki links lazily.
+ * Used by omni check to validate source code wiki links lazily.
  */
 export async function resolveSourceSymbol(
   filePath: string,

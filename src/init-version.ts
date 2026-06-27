@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * Bump this number whenever `lat init` setup changes in a way that
+ * Bump this number whenever `omni init` setup changes in a way that
  * requires users to re-run it (e.g. new hooks, AGENTS.md changes,
  * MCP config changes).
  */
@@ -15,12 +15,12 @@ type InitMeta = {
   file_hashes?: Record<string, string>;
 };
 
-function cachePath(latDir: string): string {
-  return join(latDir, '.cache', 'lat_init.json');
+function cachePath(omniDir: string): string {
+  return join(omniDir, '.cache', 'lat_init.json');
 }
 
-function readMeta(latDir: string): InitMeta | null {
-  const p = cachePath(latDir);
+function readMeta(omniDir: string): InitMeta | null {
+  const p = cachePath(omniDir);
   if (!existsSync(p)) return null;
   try {
     return JSON.parse(readFileSync(p, 'utf-8'));
@@ -29,14 +29,14 @@ function readMeta(latDir: string): InitMeta | null {
   }
 }
 
-export function readInitVersion(latDir: string): number | null {
-  const meta = readMeta(latDir);
+export function readInitVersion(omniDir: string): number | null {
+  const meta = readMeta(omniDir);
   if (!meta) return null;
   return typeof meta.init_version === 'number' ? meta.init_version : null;
 }
 
-export function readFileHash(latDir: string, relPath: string): string | null {
-  const meta = readMeta(latDir);
+export function readFileHash(omniDir: string, relPath: string): string | null {
+  const meta = readMeta(omniDir);
   return meta?.file_hashes?.[relPath] ?? null;
 }
 
@@ -45,18 +45,18 @@ export function contentHash(content: string): string {
 }
 
 export function writeInitMeta(
-  latDir: string,
+  omniDir: string,
   fileHashes: Record<string, string>,
 ): void {
-  const cacheDir = join(latDir, '.cache');
+  const cacheDir = join(omniDir, '.cache');
   mkdirSync(cacheDir, { recursive: true });
   // Merge with existing hashes so we don't lose entries from agents
   // that weren't selected this run
-  const existing = readMeta(latDir);
+  const existing = readMeta(omniDir);
   const mergedHashes = { ...existing?.file_hashes, ...fileHashes };
   const data: InitMeta = {
     init_version: INIT_VERSION,
     file_hashes: mergedHashes,
   };
-  writeFileSync(cachePath(latDir), JSON.stringify(data, null, 2) + '\n');
+  writeFileSync(cachePath(omniDir), JSON.stringify(data, null, 2) + '\n');
 }

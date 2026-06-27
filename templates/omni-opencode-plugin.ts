@@ -1,8 +1,8 @@
 import { type Plugin, tool } from "@opencode-ai/plugin"
 import { execSync } from "child_process"
 
-/** Absolute path to the lat binary, injected by `lat init`. */
-const LAT = "__LAT_BIN__"
+/** Absolute path to the lat binary, injected by `omni init`. */
+const LAT = "__OMNI_BIN__"
 
 function run(args: string[]): string {
   return execSync(`${LAT} ${args.join(" ")}`, {
@@ -20,12 +20,12 @@ function tryRun(args: string[]): string {
   }
 }
 
-export const LatPlugin: Plugin = async (ctx) => {
+export const OmniPlugin: Plugin = async (ctx) => {
   return {
     tool: {
-      lat_search: tool({
+      omni_search: tool({
         description:
-          "Semantic search across lat.md sections using embeddings. Use before starting any task to find relevant design context.",
+          "Semantic search across omni.md sections using embeddings. Use before starting any task to find relevant design context.",
         args: {
           query: tool.schema.string("Search query in natural language"),
           limit: tool.schema.optional(
@@ -40,9 +40,9 @@ export const LatPlugin: Plugin = async (ctx) => {
         },
       }),
 
-      lat_section: tool({
+      omni_section: tool({
         description:
-          "Show full content of a lat.md section with outgoing/incoming refs",
+          "Show full content of a omni.md section with outgoing/incoming refs",
         args: {
           query: tool.schema.string(
             'Section ID or name (e.g. "cli#init", "Tests#User login")',
@@ -54,7 +54,7 @@ export const LatPlugin: Plugin = async (ctx) => {
         },
       }),
 
-      lat_locate: tool({
+      omni_locate: tool({
         description:
           "Find a section by name (exact, subsection tail, or fuzzy match)",
         args: {
@@ -66,9 +66,9 @@ export const LatPlugin: Plugin = async (ctx) => {
         },
       }),
 
-      lat_check: tool({
+      omni_check: tool({
         description:
-          "Validate all wiki links and code refs in lat.md. Returns errors or 'All checks passed'",
+          "Validate all wiki links and code refs in omni.md. Returns errors or 'All checks passed'",
         args: {},
         async execute() {
           try {
@@ -80,7 +80,7 @@ export const LatPlugin: Plugin = async (ctx) => {
         },
       }),
 
-      lat_expand: tool({
+      omni_expand: tool({
         description:
           "Expand [[refs]] in text to resolved file locations and context",
         args: {
@@ -92,7 +92,7 @@ export const LatPlugin: Plugin = async (ctx) => {
         },
       }),
 
-      lat_refs: tool({
+      omni_refs: tool({
         description:
           "Find what references a given section via wiki links or @lat code comments",
         args: {
@@ -118,7 +118,7 @@ export const LatPlugin: Plugin = async (ctx) => {
           checkOutput = (err as { stdout?: string }).stdout || ""
         }
 
-        // Check git diff for lat.md/ sync status
+        // Check git diff for omni.md/ sync status
         let needsSync = false
         let codeLines = 0
         try {
@@ -135,7 +135,7 @@ export const LatPlugin: Plugin = async (ctx) => {
             const removed = parseInt(parts[1], 10) || 0
             const file = parts[2]
             const changed = added + removed
-            if (file.startsWith("lat.md/")) {
+            if (file.startsWith("omni.md/")) {
               latMdLines += changed
             } else if (/\.(ts|tsx|js|jsx|py|rs|go|c|h)$/.test(file)) {
               codeLines += changed
@@ -155,14 +155,14 @@ export const LatPlugin: Plugin = async (ctx) => {
 
         const message =
           checkFailed && needsSync
-            ? `lat check failed and lat.md/ may be out of sync (${codeLines} code lines changed). Run lat_check, fix errors, and update lat.md/.`
+            ? `omni check failed and omni.md/ may be out of sync (${codeLines} code lines changed). Run omni_check, fix errors, and update omni.md/.`
             : checkFailed
-              ? `lat check failed. Run lat_check and fix the errors.`
-              : `lat.md/ may be out of sync — ${codeLines} code lines changed but lat.md/ was not updated. Update lat.md/ and run lat_check.`
+              ? `omni check failed. Run omni_check and fix the errors.`
+              : `omni.md/ may be out of sync — ${codeLines} code lines changed but omni.md/ was not updated. Update omni.md/ and run omni_check.`
 
         await ctx.client.app.log({
           body: {
-            service: "lat.md",
+            service: "omni.md",
             level: "warn",
             message,
           },

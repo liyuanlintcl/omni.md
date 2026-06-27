@@ -30,8 +30,8 @@ function collapsibleResult(
   );
 }
 
-/** Absolute path to the lat binary, injected by `lat init`. */
-const LAT = "__LAT_BIN__";
+/** Absolute path to the lat binary, injected by `omni init`. */
+const LAT = "__OMNI_BIN__";
 
 function run(args: string[], cwd?: string): string {
   const { execSync } = require("child_process") as typeof import("child_process");
@@ -54,13 +54,13 @@ export default function (pi: ExtensionAPI) {
   // ── Tools ──────────────────────────────────────────────────────────
 
   pi.registerTool({
-    name: "lat_search",
-    label: "lat search",
-    description: "Semantic search across lat.md sections using embeddings",
-    promptSnippet: "Search lat.md documentation by meaning",
+    name: "omni_search",
+    label: "omni search",
+    description: "Semantic search across omni.md sections using embeddings",
+    promptSnippet: "Search omni.md documentation by meaning",
     promptGuidelines: [
       "Use before starting any task to find relevant design context",
-      "Search results include section IDs you can pass to lat_section",
+      "Search results include section IDs you can pass to omni_section",
     ],
     parameters: Type.Object({
       query: Type.String({ description: "Search query in natural language" }),
@@ -78,7 +78,7 @@ export default function (pi: ExtensionAPI) {
     },
     renderCall(args, theme) {
       return new Text(
-        theme.fg("toolTitle", theme.bold("lat search ")) +
+        theme.fg("toolTitle", theme.bold("omni search ")) +
         theme.fg("dim", `"${args.query}"`),
         0, 0,
       );
@@ -87,11 +87,11 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerTool({
-    name: "lat_section",
-    label: "lat section",
+    name: "omni_section",
+    label: "omni section",
     description:
-      "Show full content of a lat.md section with outgoing/incoming refs",
-    promptSnippet: "Read a specific lat.md section",
+      "Show full content of a omni.md section with outgoing/incoming refs",
+    promptSnippet: "Read a specific omni.md section",
     parameters: Type.Object({
       query: Type.String({
         description:
@@ -108,7 +108,7 @@ export default function (pi: ExtensionAPI) {
     },
     renderCall(args, theme) {
       return new Text(
-        theme.fg("toolTitle", theme.bold("lat section ")) +
+        theme.fg("toolTitle", theme.bold("omni section ")) +
         theme.fg("dim", `"${args.query}"`),
         0, 0,
       );
@@ -117,11 +117,11 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerTool({
-    name: "lat_locate",
-    label: "lat locate",
+    name: "omni_locate",
+    label: "omni locate",
     description:
       "Find a section by name (exact, subsection tail, or fuzzy match)",
-    promptSnippet: "Find a lat.md section by name",
+    promptSnippet: "Find a omni.md section by name",
     parameters: Type.Object({
       query: Type.String({ description: "Section name to locate" }),
     }),
@@ -135,7 +135,7 @@ export default function (pi: ExtensionAPI) {
     },
     renderCall(args, theme) {
       return new Text(
-        theme.fg("toolTitle", theme.bold("lat locate ")) +
+        theme.fg("toolTitle", theme.bold("omni locate ")) +
         theme.fg("dim", `"${args.query}"`),
         0, 0,
       );
@@ -143,11 +143,11 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerTool({
-    name: "lat_check",
-    label: "lat check",
+    name: "omni_check",
+    label: "omni check",
     description:
-      "Validate all wiki links and code refs in lat.md. Returns errors or 'All checks passed'",
-    promptSnippet: "Validate lat.md links and code refs",
+      "Validate all wiki links and code refs in omni.md. Returns errors or 'All checks passed'",
+    promptSnippet: "Validate omni.md links and code refs",
     parameters: Type.Object({}),
     async execute() {
       try {
@@ -163,15 +163,15 @@ export default function (pi: ExtensionAPI) {
     },
     renderCall(_args, theme) {
       return new Text(
-        theme.fg("toolTitle", theme.bold("lat check")),
+        theme.fg("toolTitle", theme.bold("omni check")),
         0, 0,
       );
     },
   });
 
   pi.registerTool({
-    name: "lat_expand",
-    label: "lat expand",
+    name: "omni_expand",
+    label: "omni expand",
     description:
       "Expand [[refs]] in text to resolved file locations and context",
     promptSnippet: "Resolve [[wiki links]] in text",
@@ -187,7 +187,7 @@ export default function (pi: ExtensionAPI) {
     renderCall(args, theme) {
       const preview = args.text.length > 60 ? args.text.slice(0, 60) + "…" : args.text;
       return new Text(
-        theme.fg("toolTitle", theme.bold("lat expand ")) +
+        theme.fg("toolTitle", theme.bold("omni expand ")) +
         theme.fg("dim", `"${preview}"`),
         0, 0,
       );
@@ -195,10 +195,10 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerTool({
-    name: "lat_refs",
-    label: "lat refs",
+    name: "omni_refs",
+    label: "omni refs",
     description: "Find what references a given section",
-    promptSnippet: "Find incoming references to a lat.md section",
+    promptSnippet: "Find incoming references to a omni.md section",
     parameters: Type.Object({
       query: Type.String({
         description: 'Section ID (e.g. "cli#init", "file#Section")',
@@ -212,7 +212,7 @@ export default function (pi: ExtensionAPI) {
     },
     renderCall(args, theme) {
       return new Text(
-        theme.fg("toolTitle", theme.bold("lat refs ")) +
+        theme.fg("toolTitle", theme.bold("omni refs ")) +
         theme.fg("dim", `"${args.query}"`),
         0, 0,
       );
@@ -224,13 +224,13 @@ export default function (pi: ExtensionAPI) {
   pi.registerMessageRenderer("lat-reminder", (message, { expanded }, theme) => {
     const box = new Box(1, 1, (t) => theme.bg("customMessageBg", t));
     if (expanded) {
-      box.addChild(new Text(theme.fg("accent", "lat.md"), 0, 0));
+      box.addChild(new Text(theme.fg("accent", "omni.md"), 0, 0));
       box.addChild(new Markdown(message.content, 0, 0, getMarkdownTheme()));
     } else {
       const hint = keyHint("expandTools", "to expand");
       box.addChild(new Text(
-        theme.fg("accent", "lat.md") + " " +
-        theme.fg("dim", `Search lat.md before starting work. Keep lat.md/ in sync. (${hint})`),
+        theme.fg("accent", "omni.md") + " " +
+        theme.fg("dim", `Search omni.md before starting work. Keep omni.md/ in sync. (${hint})`),
         0, 0,
       ));
     }
@@ -240,13 +240,13 @@ export default function (pi: ExtensionAPI) {
   pi.registerMessageRenderer("lat-check", (message, { expanded }, theme) => {
     const box = new Box(1, 1, (t) => theme.bg("customMessageBg", t));
     if (expanded) {
-      box.addChild(new Text(theme.fg("warning", "lat check"), 0, 0));
+      box.addChild(new Text(theme.fg("warning", "omni check"), 0, 0));
       box.addChild(new Markdown(message.content, 0, 0, getMarkdownTheme()));
     } else {
       const hint = keyHint("expandTools", "to expand");
       const firstLine = message.content.split("\n")[0];
       box.addChild(new Text(
-        theme.fg("warning", "lat check") + " " +
+        theme.fg("warning", "omni check") + " " +
         theme.fg("dim", `${firstLine} (${hint})`),
         0, 0,
       ));
@@ -263,12 +263,12 @@ export default function (pi: ExtensionAPI) {
     agentEndFired = false;
 
     const reminder = [
-      "Before starting work, run `lat_search` with one or more queries describing the user's intent.",
+      "Before starting work, run `omni_search` with one or more queries describing the user's intent.",
       "ALWAYS do this, even when the task seems straightforward — search results may reveal critical design details, protocols, or constraints.",
-      "Use `lat_section` to read the full content of relevant matches.",
+      "Use `omni_section` to read the full content of relevant matches.",
       "Do not read files, write code, or run commands until you have searched.",
       "",
-      "Remember: `lat.md/` must stay in sync with the codebase. If you change code, update the relevant sections in `lat.md/` and run `lat_check` before finishing.",
+      "Remember: `omni.md/` must stay in sync with the codebase. If you change code, update the relevant sections in `omni.md/` and run `omni_check` before finishing.",
     ].join("\n");
 
     return {
@@ -285,7 +285,7 @@ export default function (pi: ExtensionAPI) {
     if (agentEndFired) return;
     agentEndFired = true;
 
-    // Run lat check
+    // Run omni check
     let checkOutput: string;
     let checkFailed = false;
     try {
@@ -295,7 +295,7 @@ export default function (pi: ExtensionAPI) {
       checkOutput = (err as { stdout?: string }).stdout || "";
     }
 
-    // Run git diff --numstat to check if lat.md/ is in sync
+    // Run git diff --numstat to check if omni.md/ is in sync
     let needsSync = false;
     let codeLines = 0;
     try {
@@ -313,7 +313,7 @@ export default function (pi: ExtensionAPI) {
         const removed = parseInt(parts[1], 10) || 0;
         const file = parts[2];
         const changed = added + removed;
-        if (file.startsWith("lat.md/")) {
+        if (file.startsWith("omni.md/")) {
           latMdLines += changed;
         } else if (/\.(ts|tsx|js|jsx|py|rs|go|c|h)$/.test(file)) {
           codeLines += changed;
@@ -333,18 +333,18 @@ export default function (pi: ExtensionAPI) {
     const parts: string[] = [];
     if (checkFailed && needsSync) {
       parts.push(
-        `\`lat check\` found errors AND the codebase has changes (${codeLines} lines) with no updates to \`lat.md/\`. Before finishing:`,
+        `\`omni check\` found errors AND the codebase has changes (${codeLines} lines) with no updates to \`omni.md/\`. Before finishing:`,
         "",
-        "1. Update `lat.md/` to reflect your code changes — run `lat_search` to find relevant sections.",
-        "2. Run `lat_check` until it passes.",
+        "1. Update `omni.md/` to reflect your code changes — run `omni_search` to find relevant sections.",
+        "2. Run `omni_check` until it passes.",
       );
     } else if (checkFailed) {
       parts.push(
-        "`lat check` failed. Run `lat_check`, fix the errors, and repeat until it passes.",
+        "`omni check` failed. Run `omni_check`, fix the errors, and repeat until it passes.",
       );
     } else {
       parts.push(
-        `The codebase has changes (${codeLines} lines) but \`lat.md/\` was not updated. Update \`lat.md/\` to be in sync with the changes — run \`lat_search\` to find relevant sections. Run \`lat_check\` at the end.`,
+        `The codebase has changes (${codeLines} lines) but \`omni.md/\` was not updated. Update \`omni.md/\` to be in sync with the changes — run \`omni_search\` to find relevant sections. Run \`omni_check\` at the end.`,
       );
     }
 

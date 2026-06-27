@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { dirname } from 'node:path';
-import { findLatticeDir } from '../lattice.js';
+import { findOmniDir } from '../omnidoc.js';
 import { plainStyler, type CmdContext, type CmdResult } from '../context.js';
 import { locateCommand } from '../cli/locate.js';
 import { sectionCommand } from '../cli/section.js';
@@ -17,9 +17,9 @@ function toMcp(result: CmdResult) {
 }
 
 export async function startMcpServer(): Promise<void> {
-  const latDir = findLatticeDir();
+  const latDir = findOmniDir();
   if (!latDir) {
-    process.stderr.write('No lat.md directory found\n');
+    process.stderr.write('No omni.md directory found\n');
     process.exit(1);
   }
   const projectRoot = dirname(latDir);
@@ -31,19 +31,19 @@ export async function startMcpServer(): Promise<void> {
   };
 
   const server = new McpServer({
-    name: 'lat',
+    name: 'omni',
     version: '1.0.0',
   });
 
   server.tool(
-    'lat_locate',
+    'omni_locate',
     'Find sections by name (exact, fuzzy, subsequence matching)',
     { query: z.string().describe('Section name or id to search for') },
     async ({ query }) => toMcp(await locateCommand(ctx, query)),
   );
 
   server.tool(
-    'lat_section',
+    'omni_section',
     'Show a section with its content, outgoing wiki link targets, and incoming references',
     {
       query: z.string().describe('Section id to look up (short or full form)'),
@@ -52,8 +52,8 @@ export async function startMcpServer(): Promise<void> {
   );
 
   server.tool(
-    'lat_search',
-    'Semantic search across lat.md sections using embeddings',
+    'omni_search',
+    'Semantic search across omni.md sections using embeddings',
     {
       query: z.string().describe('Search query in natural language'),
       limit: z
@@ -67,21 +67,21 @@ export async function startMcpServer(): Promise<void> {
   );
 
   server.tool(
-    'lat_expand',
-    'Expand [[refs]] in text to resolved lat.md section paths with context',
+    'omni_expand',
+    'Expand [[refs]] in text to resolved omni.md section paths with context',
     { text: z.string().describe('Text containing [[refs]] to expand') },
     async ({ text: input }) => toMcp(await expandCommand(ctx, input)),
   );
 
   server.tool(
-    'lat_check',
-    'Validate all wiki links, code references, and directory indexes in lat.md',
+    'omni_check',
+    'Validate all wiki links, code references, and directory indexes in omni.md',
     {},
     async () => toMcp(await checkAllCommand(ctx)),
   );
 
   server.tool(
-    'lat_refs',
+    'omni_refs',
     'Find sections that reference a given section via wiki links or @lat code comments',
     {
       query: z.string().describe('Section id to find references for'),

@@ -4,7 +4,7 @@ lat:
 ---
 # Check Sections
 
-Validates that every section in `lat.md/` has a well-formed leading paragraph.
+Validates that every section in `omni.md/` has a well-formed leading paragraph.
 
 ## Detects missing leading paragraph
 

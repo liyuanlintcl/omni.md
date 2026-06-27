@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 import { dirname, extname } from 'node:path';
-import { findLatticeDir } from '../lattice.js';
+import { findOmniDir } from '../omnidoc.js';
 import { plainStyler, type CmdContext } from '../context.js';
 import { expandPrompt } from './expand.js';
 import { runSearch } from './search.js';
@@ -49,10 +49,10 @@ function hasWikiLinks(text: string): boolean {
   return /\[\[[^\]]+\]\]/.test(text);
 }
 
-function makeHookCtx(latDir: string): CmdContext {
+function makeHookCtx(omniDir: string): CmdContext {
   return {
-    latDir,
-    projectRoot: dirname(latDir),
+    omniDir,
+    projectRoot: dirname(omniDir),
     styler: plainStyler,
     mode: 'cli',
   };
@@ -70,7 +70,7 @@ async function searchAndExpand(
   }
   if (!key) return null;
 
-  const result = await runSearch(ctx.latDir, userPrompt, key, 5);
+  const result = await runSearch(ctx.omniDir, userPrompt, key, 5);
   if (result.matches.length === 0) return null;
 
   const parts: string[] = [
@@ -102,17 +102,17 @@ async function handleUserPromptSubmit(): Promise<void> {
   const parts: string[] = [];
 
   parts.push(
-    "Before starting work, run `lat search` with one or more queries describing the user's intent.",
+    "Before starting work, run `omni search` with one or more queries describing the user's intent.",
     'ALWAYS do this, even when the task seems straightforward — search results may reveal critical design details, protocols, or constraints.',
-    'Use `lat section` to read the full content of relevant matches.',
+    'Use `omni section` to read the full content of relevant matches.',
     'Do not read files, write code, or run commands until you have searched.',
     '',
-    'Remember: `lat.md/` must stay in sync with the codebase. If you change code, update the relevant sections in `lat.md/` and run `lat check` before finishing.',
+    'Remember: `omni.md/` must stay in sync with the codebase. If you change code, update the relevant sections in `omni.md/` and run `omni check` before finishing.',
   );
 
-  const latDir = findLatticeDir();
-  if (latDir && userPrompt) {
-    const ctx = makeHookCtx(latDir);
+  const omniDir = findOmniDir();
+  if (omniDir && userPrompt) {
+    const ctx = makeHookCtx(omniDir);
 
     // If the user prompt contains [[refs]], resolve them inline
     if (hasWikiLinks(userPrompt)) {
@@ -133,7 +133,7 @@ async function handleUserPromptSubmit(): Promise<void> {
       } catch {
         parts.push(
           '',
-          'NOTE: The user prompt contains [[refs]] but resolution failed. Run `lat expand` on the prompt text manually.',
+          'NOTE: The user prompt contains [[refs]] but resolution failed. Run `omni expand` on the prompt text manually.',
         );
       }
     }
@@ -153,19 +153,19 @@ async function handleUserPromptSubmit(): Promise<void> {
 }
 
 /** Minimum diff size (in lines) to consider "significant" code change. */
-/** Minimum code change size (lines) before we consider flagging lat.md/ sync. */
+/** Minimum code change size (lines) before we consider flagging omni.md/ sync. */
 const DIFF_THRESHOLD = 5;
 
-/** lat.md/ changes below this ratio of code changes trigger a sync reminder. */
-const LATMD_RATIO = 0.05;
+/** omni.md/ changes below this ratio of code changes trigger a sync reminder. */
+const OMNIMD_RATIO = 0.05;
 
-/** If lat.md/ changes exceed this many lines, skip the ratio check entirely. */
-const LATMD_UPPER_THRESHOLD = 50;
+/** If omni.md/ changes exceed this many lines, skip the ratio check entirely. */
+const OMNIMD_UPPER_THRESHOLD = 50;
 
-/** Run `git diff --numstat` and return { codeLines, latMdLines }. */
+/** Run `git diff --numstat` and return { codeLines, omniMdLines }. */
 function analyzeDiff(projectRoot: string): {
   codeLines: number;
-  latMdLines: number;
+  omniMdLines: number;
 } {
   let output: string;
   try {
@@ -174,11 +174,11 @@ function analyzeDiff(projectRoot: string): {
       encoding: 'utf-8',
     });
   } catch {
-    return { codeLines: 0, latMdLines: 0 };
+    return { codeLines: 0, omniMdLines: 0 };
   }
 
   let codeLines = 0;
-  let latMdLines = 0;
+  let omniMdLines = 0;
 
   // Each line: "added\tremoved\tfile" (e.g. "42\t11\tsrc/cli/hook.ts")
   for (const line of output.split('\n')) {
@@ -188,14 +188,14 @@ function analyzeDiff(projectRoot: string): {
     const removed = parseInt(parts[1], 10) || 0;
     const file = parts[2];
     const changed = added + removed;
-    if (file.startsWith('lat.md/')) {
-      latMdLines += changed;
+    if (file.startsWith('omni.md/')) {
+      omniMdLines += changed;
     } else if (SOURCE_EXTENSIONS.has(extname(file))) {
       codeLines += changed;
     }
   }
 
-  return { codeLines, latMdLines };
+  return { codeLines, omniMdLines };
 }
 
 type StopStatus = {
@@ -203,14 +203,14 @@ type StopStatus = {
   totalErrors: number;
   needsSync: boolean;
   codeLines: number;
-  latMdLines: number;
+  omniMdLines: number;
 };
 
-async function getStopStatus(latDir: string): Promise<StopStatus> {
-  const md = await checkMd(latDir);
-  const code = await checkCodeRefs(latDir);
-  const indexErrors = await checkIndex(latDir);
-  const sectionErrors = await checkSections(latDir);
+async function getStopStatus(omniDir: string): Promise<StopStatus> {
+  const md = await checkMd(omniDir);
+  const code = await checkCodeRefs(omniDir);
+  const indexErrors = await checkIndex(omniDir);
+  const sectionErrors = await checkSections(omniDir);
   const totalErrors =
     md.errors.length +
     code.errors.length +
@@ -218,12 +218,12 @@ async function getStopStatus(latDir: string): Promise<StopStatus> {
     sectionErrors.length;
   const checkFailed = totalErrors > 0;
 
-  const projectRoot = dirname(latDir);
-  const { codeLines, latMdLines } = analyzeDiff(projectRoot);
+  const projectRoot = dirname(omniDir);
+  const { codeLines, omniMdLines } = analyzeDiff(projectRoot);
   let needsSync = false;
-  if (codeLines >= DIFF_THRESHOLD && latMdLines < LATMD_UPPER_THRESHOLD) {
-    const effectiveLatMd = latMdLines === 0 ? 0 : Math.max(latMdLines, 1);
-    needsSync = effectiveLatMd < codeLines * LATMD_RATIO;
+  if (codeLines >= DIFF_THRESHOLD && omniMdLines < OMNIMD_UPPER_THRESHOLD) {
+    const effectiveLatMd = omniMdLines === 0 ? 0 : Math.max(omniMdLines, 1);
+    needsSync = effectiveLatMd < codeLines * OMNIMD_RATIO;
   }
 
   return {
@@ -231,7 +231,7 @@ async function getStopStatus(latDir: string): Promise<StopStatus> {
     totalErrors,
     needsSync,
     codeLines,
-    latMdLines,
+    omniMdLines,
   };
 }
 
@@ -240,40 +240,40 @@ function formatStopReason({
   totalErrors,
   needsSync,
   codeLines,
-  latMdLines,
+  omniMdLines,
 }: StopStatus): string | null {
   if (!checkFailed && !needsSync) return null;
 
   const parts: string[] = [];
 
   const syncMsg =
-    latMdLines === 0
+    omniMdLines === 0
       ? 'The codebase has changes (' +
         codeLines +
-        ' lines) but `lat.md/` was not updated.'
+        ' lines) but `omni.md/` was not updated.'
       : 'The codebase has changes (' +
         codeLines +
-        ' lines) but `lat.md/` may not be fully in sync (' +
-        latMdLines +
+        ' lines) but `omni.md/` may not be fully in sync (' +
+        omniMdLines +
         ' lines changed).';
 
   if (checkFailed && needsSync) {
     parts.push(
-      '`lat check` found errors. ' + syncMsg + ' Before finishing:',
+      '`omni check` found errors. ' + syncMsg + ' Before finishing:',
       '',
-      '1. Update `lat.md/` to reflect your code changes — run `lat search` to find relevant sections.',
-      '2. Run `lat check` until it passes.',
+      '1. Update `omni.md/` to reflect your code changes — run `omni search` to find relevant sections.',
+      '2. Run `omni check` until it passes.',
     );
   } else if (checkFailed) {
     parts.push(
-      '`lat check` found ' +
+      '`omni check` found ' +
         totalErrors +
-        ' error(s). Run `lat check`, fix the errors, and repeat until it passes.',
+        ' error(s). Run `omni check`, fix the errors, and repeat until it passes.',
     );
   } else {
     parts.push(
       syncMsg +
-        ' Verify `lat.md/` is in sync — run `lat search` to find relevant sections. Run `lat check` at the end.',
+        ' Verify `omni.md/` is in sync — run `omni search` to find relevant sections. Run `omni check` at the end.',
     );
   }
 
@@ -281,8 +281,8 @@ function formatStopReason({
 }
 
 async function handleClaudeStop(): Promise<void> {
-  const latDir = findLatticeDir();
-  if (!latDir) return;
+  const omniDir = findOmniDir();
+  if (!omniDir) return;
 
   // Read stdin to check if we already blocked once
   let stopHookActive = false;
@@ -294,13 +294,13 @@ async function handleClaudeStop(): Promise<void> {
     // If we can't parse stdin, treat as first attempt
   }
 
-  const status = await getStopStatus(latDir);
+  const status = await getStopStatus(omniDir);
 
   // Second pass — warn the user but don't block again
   if (stopHookActive) {
     if (status.checkFailed) {
       console.error(
-        `lat check is still failing (${status.totalErrors} error(s)). Run \`lat check\` to see details.`,
+        `omni check is still failing (${status.totalErrors} error(s)). Run \`omni check\` to see details.`,
       );
     }
     return;
@@ -312,10 +312,10 @@ async function handleClaudeStop(): Promise<void> {
 }
 
 async function handleCursorStop(): Promise<void> {
-  const latDir = findLatticeDir();
-  if (!latDir) return;
+  const omniDir = findOmniDir();
+  if (!omniDir) return;
 
-  const reason = formatStopReason(await getStopStatus(latDir));
+  const reason = formatStopReason(await getStopStatus(omniDir));
   if (!reason) return;
   outputCursorStop(reason);
 }

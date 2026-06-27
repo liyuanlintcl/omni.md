@@ -17,14 +17,14 @@ export function getLocalVersion(): string {
 }
 
 /**
- * Fetch the latest published version of `lat.md` from the npm registry.
+ * Fetch the latest published version of `omni.md` from the npm registry.
  * Returns null if the fetch fails or times out (3s).
  */
 export async function fetchLatestVersion(): Promise<string | null> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch('https://registry.npmjs.org/lat.md/latest', {
+    const res = await fetch('https://registry.npmjs.org/omni.md/latest', {
       signal: controller.signal,
     });
     clearTimeout(timer);

@@ -21,7 +21,7 @@ The error message suggests the specific fix (`did you mean "[[alpha/notes#Topic 
 
 ## Ambiguous short ref in code
 
-When two directories contain a file with the same stem, a `@lat:` code comment using the short name (e.g. `// @lat: [[notes#Topic A]]`) is flagged as ambiguous by `check code-refs`, with an error listing both candidate full paths.
+When two directories contain a file with the same stem, a `@omni:` code comment using the short name (e.g. `// @omni: [[notes#Topic A]]`) is flagged as ambiguous by `check code-refs`, with an error listing both candidate full paths.
 
 ## Short ref passes check md
 
@@ -29,7 +29,7 @@ When a file stem is unique in the vault (e.g. only one `setup.md` exists, under 
 
 ## Short ref passes check code-refs
 
-When a file stem is unique in the vault, a `@lat:` code comment using the short name (e.g. `// @lat: [[setup#Configure]]`) passes `check code-refs` without errors.
+When a file stem is unique in the vault, a `@omni:` code comment using the short name (e.g. `// @omni: [[setup#Configure]]`) passes `check code-refs` without errors.
 
 ## Short ref findSections resolves
 
@@ -37,11 +37,11 @@ When a file stem is unique in the vault, a `@lat:` code comment using the short 
 
 ## Short ref refs finds md references
 
-`lat refs` for a short ref target finds wiki link references from markdown files that use the short form.
+`omni refs` for a short ref target finds wiki link references from markdown files that use the short form.
 
 ## Short ref refs finds code references
 
-`lat refs` for a short ref target finds `@lat:` code references that use the short form.
+`omni refs` for a short ref target finds `@omni:` code references that use the short form.
 
 ## Full ref passes check md
 
@@ -49,7 +49,7 @@ A wiki link using the full vault-relative path `[[guides/setup#Install]]` passes
 
 ## Full ref passes check code-refs
 
-A `@lat:` code comment using the full vault-relative path `[[guides/setup#Configure]]` passes `check code-refs` without errors.
+A `@omni:` code comment using the full vault-relative path `[[guides/setup#Configure]]` passes `check code-refs` without errors.
 
 ## Full ref findSections resolves
 
@@ -57,11 +57,11 @@ A `@lat:` code comment using the full vault-relative path `[[guides/setup#Config
 
 ## Full ref refs finds md references
 
-`lat refs` for a full ref target finds wiki link references from markdown files that use the full path form.
+`omni refs` for a full ref target finds wiki link references from markdown files that use the full path form.
 
 ## Full ref refs finds code references
 
-`lat refs` for a full ref target finds `@lat:` code references that use the full path form.
+`omni refs` for a full ref target finds `@omni:` code references that use the full path form.
 
 ## Bare heading in md is error
 
@@ -77,11 +77,11 @@ A wiki link `[[other-file#Missing]]` where `other-file.md` does not exist is fla
 
 ## Bare heading in code is error
 
-A `@lat:` code comment `// @lat: [[Installation]]` where `Installation` is a heading (not a file) is flagged as a dangling ref by `check code-refs`. Code refs must use `[[file#Heading]]` form.
+A `@omni:` code comment `// @omni: [[Installation]]` where `Installation` is a heading (not a file) is flagged as a dangling ref by `check code-refs`. Code refs must use `[[file#Heading]]` form.
 
 ## Valid code ref with file prefix passes
 
-A `@lat:` code comment `// @lat: [[docs#Configuration]]` using the correct `file#Heading` form passes `check code-refs` without errors.
+A `@omni:` code comment `// @omni: [[docs#Configuration]]` using the correct `file#Heading` form passes `check code-refs` without errors.
 
 ## Nested in-file refs pass
 

@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/1st1/lat.md/actions/workflows/ci.yml"><img src="https://github.com/1st1/lat.md/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://www.npmjs.com/package/lat.md"><img src="https://img.shields.io/npm/v/lat.md" alt="npm"></a>
+  <a href="https://github.com/liyuanlintcl/omni.md/actions/workflows/ci.yml"><img src="https://github.com/liyuanlintcl/omni.md/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/omni.md"><img src="https://img.shields.io/npm/v/lat.md" alt="npm"></a>
 </p>
 
 <p align="center">A knowledge graph for your codebase, written in markdown.</p>
@@ -36,7 +36,7 @@ The `lat` CLI gives agents and humans a system to navigate and maintain the grap
 ## Install
 
 ```bash
-npm install -g lat.md
+npm install -g omni.md
 ```
 
 Then run `lat init` in the repo you want to use lat in.

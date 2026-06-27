@@ -14,13 +14,13 @@ Unit tests (always run). Verify `detectProvider` correctly identifies OpenAI (`s
 
 Functional tests that exercise the full RAG pipeline using a replay server instead of a real embedding API.
 
-The test covers indexing, hashing, vector insert, and KNN search via `tests/rag-replay-server.ts`. Test fixture lives in `tests/cases/rag/lat.md/` with pre-recorded vectors in `tests/cases/rag/replay-data/`.
+The test covers indexing, hashing, vector insert, and KNN search via `tests/rag-replay-server.ts`. Test fixture lives in `tests/cases/rag/omni.md/` with pre-recorded vectors in `tests/cases/rag/replay-data/`.
 
 The replay server has two modes:
 - **Replay** (default `pnpm test`): serves cached vectors from binary replay data. Matches requests by SHA-256 of input text.
-- **Capture** (`pnpm cook-test-rag`): proxies to real API via `LAT_LLM_KEY`, records all text→vector mappings, flushes binary data to `replay-data/` on teardown. Re-run this after changing how sections are chunked or which texts are embedded.
+- **Capture** (`pnpm cook-test-rag`): proxies to real API via `OMNI_LLM_KEY`, records all text→vector mappings, flushes binary data to `replay-data/` on teardown. Re-run this after changing how sections are chunked or which texts are embedded.
 
-The test sets `LAT_LLM_KEY` to `REPLAY_LAT_LLM_KEY::<server-url>`, which `detectProvider` routes to the local replay server. This way the entire codebase runs unmodified — same `fetch()` calls, same provider logic.
+The test sets `OMNI_LLM_KEY` to `REPLAY_OMNI_LLM_KEY::<server-url>`, which `detectProvider` routes to the local replay server. This way the entire codebase runs unmodified — same `fetch()` calls, same provider logic.
 
 ### Indexes all sections
 

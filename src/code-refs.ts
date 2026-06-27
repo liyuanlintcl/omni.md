@@ -5,18 +5,18 @@ import { walkEntries } from './walk.js';
 
 /** Glob patterns used to exclude directories/files from code-ref scanning.
  *  Shared between rg args and the TS fallback's walkFiles filter. */
-const EXCLUDE_DIRS = ['lat.md', '.claude'];
+const EXCLUDE_DIRS = ['omni.md', '.claude'];
 const EXCLUDE_GLOBS = ['*.md'];
 
 /** Walk project files for code-ref scanning. Uses walkEntries for .gitignore
- *  support, then additionally skips .md files, lat.md/, .claude/, and sub-projects. */
+ *  support, then additionally skips .md files, omni.md/, .claude/, and sub-projects. */
 export async function walkFiles(dir: string): Promise<string[]> {
   const entries = await walkEntries(dir);
 
-  // Collect directories that contain their own lat.md/ (sub-projects)
+  // Collect directories that contain their own omni.md/ (sub-projects)
   const subProjects = new Set<string>();
   for (const e of entries) {
-    const i = e.indexOf('/lat.md/');
+    const i = e.indexOf('/omni.md/');
     if (i !== -1) subProjects.add(e.slice(0, i + 1));
   }
 
@@ -24,7 +24,7 @@ export async function walkFiles(dir: string): Promise<string[]> {
     .filter(
       (e) =>
         !e.endsWith('.md') &&
-        !e.startsWith('lat.md/') &&
+        !e.startsWith('omni.md/') &&
         !e.startsWith('.claude/') &&
         ![...subProjects].some((prefix) => e.startsWith(prefix)),
     )
@@ -37,10 +37,10 @@ function re(flags: string) {
     new RegExp(strings.raw[0].replace(/\s+/g, ''), flags);
 }
 
-// Line comment (// or #), then @lat: marker, then [[target]]
-export const LAT_REF_RE = re('gv')`
+// Line comment (// or #), then @omni: marker, then [[target]]
+export const OMNI_REF_RE = re('gv')`
   (?: // | # )
-  \s* @lat: \s*
+  \s* @omni: \s*
   \[\[
     ( [^\]]+ )
   \]\]
@@ -96,17 +96,17 @@ function tryExec(
 }
 
 /**
- * Detect sub-projects (directories containing their own lat.md/) using
- * rg --files. Finds files inside nested lat.md/ dirs and extracts the parent
+ * Detect sub-projects (directories containing their own omni.md/) using
+ * rg --files. Finds files inside nested omni.md/ dirs and extracts the parent
  * directory paths. Returns paths relative to projectRoot.
  */
 async function findSubProjects(projectRoot: string): Promise<string[]> {
-  // List files inside any lat.md/ dir, then extract unique parent paths.
-  // The root lat.md/ is excluded by EXCLUDE_DIRS in the caller, so we only
-  // need to find nested ones here — search for files under */lat.md/.
+  // List files inside any omni.md/ dir, then extract unique parent paths.
+  // The root omni.md/ is excluded by EXCLUDE_DIRS in the caller, so we only
+  // need to find nested ones here — search for files under */omni.md/.
   const out = await tryExec(
     'rg',
-    ['--files', '--glob', '**/lat.md/**', '.'],
+    ['--files', '--glob', '**/omni.md/**', '.'],
     projectRoot,
   );
   if (!out) return [];
@@ -115,9 +115,9 @@ async function findSubProjects(projectRoot: string): Promise<string[]> {
   for (const line of out.split('\n')) {
     if (!line) continue;
     const clean = line.startsWith('./') ? line.slice(2) : line;
-    // "tests/cases/foo/lat.md/specs.md" → "tests/cases/foo"
-    // Skip root lat.md/ (no parent prefix — starts with "lat.md/")
-    const idx = clean.indexOf('/lat.md/');
+    // "tests/cases/foo/omni.md/specs.md" → "tests/cases/foo"
+    // Skip root omni.md/ (no parent prefix — starts with "omni.md/")
+    const idx = clean.indexOf('/omni.md/');
     if (idx !== -1) subProjects.add(clean.slice(0, idx));
   }
   return [...subProjects];
@@ -135,7 +135,7 @@ function rgExcludeArgs(subProjects: string[]): string[] {
 /**
  * Try scanning with ripgrep. Returns parsed refs and scanned file list, or null
  * if rg is not available. rg respects .gitignore by default; we add glob
- * exclusions for lat.md/, .claude/, *.md files, and sub-projects.
+ * exclusions for omni.md/, .claude/, *.md files, and sub-projects.
  */
 async function tryRipgrep(
   projectRoot: string,
@@ -144,13 +144,13 @@ async function tryRipgrep(
   const subProjects = await findSubProjects(projectRoot);
   const excludes = rgExcludeArgs(subProjects);
 
-  // Search for @lat refs
+  // Search for @omni refs
   const searchArgs = [
     '--no-heading',
     '--line-number',
     '--with-filename',
     ...excludes,
-    '@lat:.*\\[\\[',
+    '@omni:.*\\[\\[',
     '.',
   ];
   const out = await tryExec('rg', searchArgs, projectRoot);
@@ -204,9 +204,9 @@ function parseGrepOutput(
     if (filePath.startsWith('./')) filePath = filePath.slice(2);
 
     // Extract targets using the same regex as the TS fallback
-    LAT_REF_RE.lastIndex = 0;
+    OMNI_REF_RE.lastIndex = 0;
     let match;
-    while ((match = LAT_REF_RE.exec(content)) !== null) {
+    while ((match = OMNI_REF_RE.exec(content)) !== null) {
       refs.push({ target: match[1], file: filePath, line: lineNum });
     }
   }
@@ -215,7 +215,7 @@ function parseGrepOutput(
 }
 
 /**
- * TypeScript fallback: read every file and scan for @lat refs.
+ * TypeScript fallback: read every file and scan for @omni refs.
  */
 async function scanWithTs(
   files: string[],
@@ -236,8 +236,8 @@ async function scanWithTs(
     const lines = content.split('\n');
     for (let i = 0; i < lines.length; i++) {
       let match;
-      LAT_REF_RE.lastIndex = 0;
-      while ((match = LAT_REF_RE.exec(lines[i])) !== null) {
+      OMNI_REF_RE.lastIndex = 0;
+      while ((match = OMNI_REF_RE.exec(lines[i])) !== null) {
         refs.push({
           target: match[1],
           file: relative(projectRoot, file),
@@ -258,8 +258,8 @@ export async function hasRipgrep(): Promise<boolean> {
 
 export async function scanCodeRefs(projectRoot: string): Promise<ScanResult> {
   // Fast path: use rg for both searching and file listing
-  // _LAT_DISABLE_RG is a test-only escape hatch to force the TS fallback
-  if (process.env._LAT_DISABLE_RG !== '1') {
+  // _OMNI_DISABLE_RG is a test-only escape hatch to force the TS fallback
+  if (process.env._OMNI_DISABLE_RG !== '1') {
     const rgResult = await tryRipgrep(projectRoot);
     if (rgResult !== null) {
       return { refs: rgResult.refs, files: rgResult.files, usedRg: true };
