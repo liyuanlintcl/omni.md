@@ -37,8 +37,8 @@ function re(flags: string) {
     new RegExp(strings.raw[0].replace(/\s+/g, ''), flags);
 }
 
-// Line comment (// or #), then @omni: marker, then [[target]]
-export const OMNI_REF_RE = re('gv')`
+// Line comment (// or #), then @lat: marker, then [[target]]
+export const LAT_REF_RE = re('gv')`
   (?: // | # )
   \s* @omni: \s*
   \[\[
@@ -204,9 +204,9 @@ function parseGrepOutput(
     if (filePath.startsWith('./')) filePath = filePath.slice(2);
 
     // Extract targets using the same regex as the TS fallback
-    OMNI_REF_RE.lastIndex = 0;
+    LAT_REF_RE.lastIndex = 0;
     let match;
-    while ((match = OMNI_REF_RE.exec(content)) !== null) {
+    while ((match = LAT_REF_RE.exec(content)) !== null) {
       refs.push({ target: match[1], file: filePath, line: lineNum });
     }
   }
@@ -236,8 +236,8 @@ async function scanWithTs(
     const lines = content.split('\n');
     for (let i = 0; i < lines.length; i++) {
       let match;
-      OMNI_REF_RE.lastIndex = 0;
-      while ((match = OMNI_REF_RE.exec(lines[i])) !== null) {
+      LAT_REF_RE.lastIndex = 0;
+      while ((match = LAT_REF_RE.exec(lines[i])) !== null) {
         refs.push({
           target: match[1],
           file: relative(projectRoot, file),

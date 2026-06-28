@@ -1,4 +1,4 @@
-import { loadAllSections, findSections } from '../omnidoc.js';
+import { loadAllSections, findSections } from '../lattice.js';
 import { formatResultList } from '../format.js';
 import type { CmdContext, CmdResult } from '../context.js';
 

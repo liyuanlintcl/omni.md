@@ -7,7 +7,7 @@ import {
   loadAllSections,
   flattenSections,
   type SectionMatch,
-} from '../omnidoc.js';
+} from '../lattice.js';
 import { formatResultList, formatNavHints } from '../format.js';
 
 export type SearchResult = {

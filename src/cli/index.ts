@@ -38,7 +38,7 @@ const version = findPackageJson();
 const program = new Command();
 
 program
-  .name('omni')
+  .name('omni-md')
   .description('Anchor source code to high-level concepts defined in markdown')
   .version(version)
   .option('--dir <path>', 'project root to look for omni.md in (default: cwd)')
@@ -126,6 +126,16 @@ check
     const ctx = resolveContext(program.opts());
     const { checkSectionsCommand } = await import('./check.js');
     handleResult(await checkSectionsCommand(ctx));
+  });
+
+check
+  .command('schema')
+  .description('Validate markdown docs against YAML schema')
+  .argument('[schema_rel_path]', 'schema file relative to omni.schema/ (optional — scan all if omitted)')
+  .action(async (schemaRel?: string) => {
+    const ctx = resolveContext(program.opts());
+    const { schemaCheckCommand } = await import('./schema-check.js');
+    handleResult(await schemaCheckCommand(ctx, schemaRel));
   });
 
 async function runExpand(

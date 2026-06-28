@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 import { dirname, extname } from 'node:path';
-import { findOmniDir } from '../omnidoc.js';
+import { findLatticeDir } from '../lattice.js';
 import { plainStyler, type CmdContext } from '../context.js';
 import { expandPrompt } from './expand.js';
 import { runSearch } from './search.js';
@@ -49,10 +49,10 @@ function hasWikiLinks(text: string): boolean {
   return /\[\[[^\]]+\]\]/.test(text);
 }
 
-function makeHookCtx(omniDir: string): CmdContext {
+function makeHookCtx(latDir: string): CmdContext {
   return {
-    omniDir,
-    projectRoot: dirname(omniDir),
+    latDir,
+    projectRoot: dirname(latDir),
     styler: plainStyler,
     mode: 'cli',
   };
@@ -70,7 +70,7 @@ async function searchAndExpand(
   }
   if (!key) return null;
 
-  const result = await runSearch(ctx.omniDir, userPrompt, key, 5);
+  const result = await runSearch(ctx.latDir, userPrompt, key, 5);
   if (result.matches.length === 0) return null;
 
   const parts: string[] = [
@@ -110,9 +110,9 @@ async function handleUserPromptSubmit(): Promise<void> {
     'Remember: `omni.md/` must stay in sync with the codebase. If you change code, update the relevant sections in `omni.md/` and run `omni check` before finishing.',
   );
 
-  const omniDir = findOmniDir();
-  if (omniDir && userPrompt) {
-    const ctx = makeHookCtx(omniDir);
+  const latDir3 = findLatticeDir();
+  if (latDir3 && userPrompt) {
+    const ctx = makeHookCtx(latDir3);
 
     // If the user prompt contains [[refs]], resolve them inline
     if (hasWikiLinks(userPrompt)) {
@@ -206,11 +206,11 @@ type StopStatus = {
   omniMdLines: number;
 };
 
-async function getStopStatus(omniDir: string): Promise<StopStatus> {
-  const md = await checkMd(omniDir);
-  const code = await checkCodeRefs(omniDir);
-  const indexErrors = await checkIndex(omniDir);
-  const sectionErrors = await checkSections(omniDir);
+async function getStopStatus(latDir: string): Promise<StopStatus> {
+  const md = await checkMd(latDir);
+  const code = await checkCodeRefs(latDir);
+  const indexErrors = await checkIndex(latDir);
+  const sectionErrors = await checkSections(latDir);
   const totalErrors =
     md.errors.length +
     code.errors.length +
@@ -218,7 +218,7 @@ async function getStopStatus(omniDir: string): Promise<StopStatus> {
     sectionErrors.length;
   const checkFailed = totalErrors > 0;
 
-  const projectRoot = dirname(omniDir);
+  const projectRoot = dirname(latDir);
   const { codeLines, omniMdLines } = analyzeDiff(projectRoot);
   let needsSync = false;
   if (codeLines >= DIFF_THRESHOLD && omniMdLines < OMNIMD_UPPER_THRESHOLD) {
@@ -281,8 +281,8 @@ function formatStopReason({
 }
 
 async function handleClaudeStop(): Promise<void> {
-  const omniDir = findOmniDir();
-  if (!omniDir) return;
+  const latDir = findLatticeDir();
+  if (!latDir) return;
 
   // Read stdin to check if we already blocked once
   let stopHookActive = false;
@@ -294,7 +294,7 @@ async function handleClaudeStop(): Promise<void> {
     // If we can't parse stdin, treat as first attempt
   }
 
-  const status = await getStopStatus(omniDir);
+  const status = await getStopStatus(latDir);
 
   // Second pass — warn the user but don't block again
   if (stopHookActive) {
@@ -312,10 +312,10 @@ async function handleClaudeStop(): Promise<void> {
 }
 
 async function handleCursorStop(): Promise<void> {
-  const omniDir = findOmniDir();
-  if (!omniDir) return;
+  const latDir2 = findLatticeDir();
+  if (!latDir2) return;
 
-  const reason = formatStopReason(await getStopStatus(omniDir));
+  const reason = formatStopReason(await getStopStatus(latDir2));
   if (!reason) return;
   outputCursorStop(reason);
 }

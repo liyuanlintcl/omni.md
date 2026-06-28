@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { basename, dirname, extname, join, relative } from 'node:path';
 import {
-  listOmniFiles,
+  listLatticeFiles,
   loadAllSections,
   extractRefs,
   flattenSections,
@@ -11,7 +11,7 @@ import {
   buildFileIndex,
   resolveRef,
   type Section,
-} from '../omnidoc.js';
+} from '../lattice.js';
 import { scanCodeRefs } from '../code-refs.js';
 import { SOURCE_EXTENSIONS, clearSymbolCache } from '../source-parser.js';
 import { walkEntries } from '../walk.js';
@@ -139,7 +139,7 @@ async function tryResolveSourceRef(
 export async function checkMd(latticeDir: string): Promise<CheckResult> {
   clearSymbolCache();
   const projectRoot = dirname(latticeDir);
-  const files = await listOmniFiles(latticeDir);
+  const files = await listLatticeFiles(latticeDir);
   const allSections = await loadAllSections(latticeDir);
   const flat = flattenSections(allSections);
   const sectionIds = new Set(flat.map((s) => s.id.toLowerCase()));
@@ -219,7 +219,7 @@ export async function checkCodeRefs(latticeDir: string): Promise<CheckResult> {
     }
   }
 
-  const files = await listOmniFiles(latticeDir);
+  const files = await listLatticeFiles(latticeDir);
   for (const file of files) {
     const content = await readFile(file, 'utf-8');
     const fm = parseFrontmatter(content);
@@ -398,7 +398,7 @@ function bodyTextLength(body: string): number {
 
 export async function checkSections(latticeDir: string): Promise<CheckError[]> {
   const projectRoot = dirname(latticeDir);
-  const files = await listOmniFiles(latticeDir);
+  const files = await listLatticeFiles(latticeDir);
   const errors: CheckError[] = [];
 
   for (const file of files) {
@@ -485,10 +485,10 @@ function formatErrorCount(count: number, s: Styler): string {
 
 export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
   const startTime = Date.now();
-  const md = await checkMd(ctx.omniDir);
-  const code = await checkCodeRefs(ctx.omniDir);
-  const indexErrors = await checkIndex(ctx.omniDir);
-  const sectionErrors = await checkSections(ctx.omniDir);
+  const md = await checkMd(ctx.latDir);
+  const code = await checkCodeRefs(ctx.latDir);
+  const indexErrors = await checkIndex(ctx.latDir);
+  const sectionErrors = await checkSections(ctx.latDir);
   const elapsed = Date.now() - startTime;
 
   const allErrors = [...md.errors, ...code.errors];
@@ -505,7 +505,7 @@ export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
   ];
 
   // Init version warning first — user should fix setup before addressing errors
-  const storedVersion = readInitVersion(ctx.omniDir);
+  const storedVersion = readInitVersion(ctx.latDir);
   if (storedVersion === null) {
     lines.push(
       '',
@@ -576,7 +576,7 @@ export async function checkAllCommand(ctx: CmdContext): Promise<CmdResult> {
 }
 
 export async function checkMdCommand(ctx: CmdContext): Promise<CmdResult> {
-  const { errors, files } = await checkMd(ctx.omniDir);
+  const { errors, files } = await checkMd(ctx.latDir);
   const s = ctx.styler;
   const lines: string[] = [formatFileStats(files, s)];
 
@@ -594,7 +594,7 @@ export async function checkMdCommand(ctx: CmdContext): Promise<CmdResult> {
 export async function checkCodeRefsCommand(
   ctx: CmdContext,
 ): Promise<CmdResult> {
-  const { errors, files } = await checkCodeRefs(ctx.omniDir);
+  const { errors, files } = await checkCodeRefs(ctx.latDir);
   const s = ctx.styler;
   const lines: string[] = [formatFileStats(files, s)];
 
@@ -610,7 +610,7 @@ export async function checkCodeRefsCommand(
 }
 
 export async function checkIndexCommand(ctx: CmdContext): Promise<CmdResult> {
-  const errors = await checkIndex(ctx.omniDir);
+  const errors = await checkIndex(ctx.latDir);
   const s = ctx.styler;
   const lines: string[] = [];
 
@@ -628,7 +628,7 @@ export async function checkIndexCommand(ctx: CmdContext): Promise<CmdResult> {
 export async function checkSectionsCommand(
   ctx: CmdContext,
 ): Promise<CmdResult> {
-  const errors = await checkSections(ctx.omniDir);
+  const errors = await checkSections(ctx.latDir);
   const s = ctx.styler;
   const lines: string[] = [];
 

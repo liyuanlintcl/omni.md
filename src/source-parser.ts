@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
-import type { Section } from './omnidoc.js';
+import type { Section } from './lattice.js';
 import {
   Parser,
   Language,

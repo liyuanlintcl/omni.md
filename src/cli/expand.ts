@@ -4,7 +4,7 @@ import {
   findSections,
   type Section,
   type SectionMatch,
-} from '../omnidoc.js';
+} from '../lattice.js';
 import type { CmdContext, CmdResult } from '../context.js';
 
 const WIKI_LINK_RE = /\[\[([^\]]+)\]\]/g;

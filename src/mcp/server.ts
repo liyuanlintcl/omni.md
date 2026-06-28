@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { dirname } from 'node:path';
-import { findOmniDir } from '../omnidoc.js';
+import { findLatticeDir } from '../lattice.js';
 import { plainStyler, type CmdContext, type CmdResult } from '../context.js';
 import { locateCommand } from '../cli/locate.js';
 import { sectionCommand } from '../cli/section.js';
@@ -17,7 +17,7 @@ function toMcp(result: CmdResult) {
 }
 
 export async function startMcpServer(): Promise<void> {
-  const latDir = findOmniDir();
+  const latDir = findLatticeDir();
   if (!latDir) {
     process.stderr.write('No omni.md directory found\n');
     process.exit(1);

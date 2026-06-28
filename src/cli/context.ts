@@ -1,6 +1,6 @@
 import { dirname } from 'node:path';
 import { styleText } from 'node:util';
-import { findOmniDir } from '../omnidoc.js';
+import { findLatticeDir } from '../lattice.js';
 import type { CmdContext, Styler } from '../context.js';
 
 export type { CmdContext };
@@ -27,13 +27,13 @@ export function resolveContext(opts: {
     process.env.NO_COLOR = '1';
   }
 
-  const omniDir = findOmniDir(opts.dir) ?? '';
-  if (!omniDir) {
+  const latDir = findLatticeDir(opts.dir) ?? '';
+  if (!latDir) {
     console.error(styleText('red', 'No omni.md directory found'));
     console.error(styleText('dim', 'Run `omni init` to create one.'));
     process.exit(1);
   }
 
-  const projectRoot = dirname(omniDir);
-  return { omniDir, projectRoot, styler: makeStyler(), mode: 'cli' };
+  const projectRoot = dirname(latDir);
+  return { latDir, projectRoot, styler: makeStyler(), mode: 'cli' };
 }

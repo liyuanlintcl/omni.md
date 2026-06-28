@@ -26,22 +26,22 @@ export type Ref = {
   line: number;
 };
 
-export type OmniFrontmatter = {
+export type LatFrontmatter = {
   requireCodeMention?: boolean;
 };
 
-export function parseFrontmatter(content: string): OmniFrontmatter {
+export function parseFrontmatter(content: string): LatFrontmatter {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return {};
   const yaml = match[1];
-  const result: OmniFrontmatter = {};
+  const result: LatFrontmatter = {};
   if (/require-code-mention:\s*true/i.test(yaml)) {
     result.requireCodeMention = true;
   }
   return result;
 }
 
-export function findOmniDir(from?: string): string | null {
+export function findLatticeDir(from?: string): string | null {
   let dir = resolve(from ?? process.cwd());
   while (true) {
     const candidate = join(dir, 'omni.md');
@@ -55,11 +55,11 @@ export function findOmniDir(from?: string): string | null {
 }
 
 export function findProjectRoot(from?: string): string | null {
-  const latDir = findOmniDir(from);
+  const latDir = findLatticeDir(from);
   return latDir ? dirname(latDir) : null;
 }
 
-export async function listOmniFiles(latticeDir: string): Promise<string[]> {
+export async function listLatticeFiles(latticeDir: string): Promise<string[]> {
   const entries = await walkEntries(latticeDir);
   return entries
     .filter((e) => e.endsWith('.md'))
@@ -178,7 +178,7 @@ export function parseSections(
 
 export async function loadAllSections(latticeDir: string): Promise<Section[]> {
   const projectRoot = dirname(latticeDir);
-  const files = await listOmniFiles(latticeDir);
+  const files = await listLatticeFiles(latticeDir);
   const all: Section[] = [];
   for (const file of files) {
     const content = await readFile(file, 'utf-8');

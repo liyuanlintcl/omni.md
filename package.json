@@ -21,7 +21,7 @@
     "codebase"
   ],
   "bin": {
-    "omni": "./dist/src/cli/index.js"
+    "omni-md": "./dist/src/cli/index.js"
   },
   "files": [
     "dist/src",
@@ -34,9 +34,11 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write 'src/**/*.ts'",
     "format:check": "prettier --check 'src/**/*.ts'",
+    "check:schema": "omni-md check schema",
     "cook-test-rag": "tsx scripts/cook-test-rag.ts"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",
     "@types/node": "^25.3.0",
     "mdast-util-from-markdown": "^2.0.3",
@@ -53,6 +55,8 @@
     "@repomix/tree-sitter-wasms": "^0.1.16",
     "commander": "^14.0.3",
     "ignore-walk": "^8.0.0",
+    "js-yaml": "^4.3.0",
+    "marked": "^15.0.0",
     "mdast-util-to-markdown": "^2.1.0",
     "remark-frontmatter": "^5.0.0",
     "remark-parse": "^11.0.0",

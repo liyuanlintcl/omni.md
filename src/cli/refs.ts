@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import {
-  listOmniFiles,
+  listLatticeFiles,
   loadAllSections,
   findSections,
   extractRefs,
@@ -11,7 +11,7 @@ import {
   resolveRef,
   type Section,
   type SectionMatch,
-} from '../omnidoc.js';
+} from '../lattice.js';
 import { formatResultList } from '../format.js';
 import { scanCodeRefs } from '../code-refs.js';
 import type { CmdContext, CmdResult } from '../context.js';
@@ -126,7 +126,7 @@ async function findSourceRefs(
   const codeRefs: string[] = [];
 
   if (scope === 'md' || scope === 'md+code') {
-    const files = await listOmniFiles(latDir);
+    const files = await listLatticeFiles(latDir);
     const matchingFromSections = new Set<string>();
     for (const file of files) {
       const content = await readFile(file, 'utf-8');
@@ -222,7 +222,7 @@ export async function findRefs(
   const codeRefs: string[] = [];
 
   if (scope === 'md' || scope === 'md+code') {
-    const files = await listOmniFiles(ctx.latDir);
+    const files = await listLatticeFiles(ctx.latDir);
     const matchingFromSections = new Set<string>();
     for (const file of files) {
       const content = await readFile(file, 'utf-8');

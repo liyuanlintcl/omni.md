@@ -6,7 +6,7 @@ import xdg from '@folder/xdg';
 // ── XDG config directory ────────────────────────────────────────────
 
 export function getConfigDir(): string {
-  return join(xdg().config, 'omni');
+  return join(xdg().config, 'omni_md');
 }
 
 export function getConfigPath(): string {
@@ -15,11 +15,11 @@ export function getConfigPath(): string {
 
 // ── Config read/write ───────────────────────────────────────────────
 
-export type OmniConfig = {
+export type LatConfig = {
   llm_key?: string;
 };
 
-export function readConfig(): OmniConfig {
+export function readConfig(): LatConfig {
   const configPath = getConfigPath();
   if (!existsSync(configPath)) return {};
   try {
@@ -32,7 +32,7 @@ export function readConfig(): OmniConfig {
   }
 }
 
-export function writeConfig(config: OmniConfig): void {
+export function writeConfig(config: LatConfig): void {
   const dir = getConfigDir();
   mkdirSync(dir, { recursive: true });
   writeFileSync(getConfigPath(), JSON.stringify(config, null, 2) + '\n');
@@ -45,7 +45,7 @@ export function writeConfig(config: OmniConfig): void {
  * 1. OMNI_LLM_KEY environment variable
  * 2. OMNI_LLM_KEY_FILE — path to a file containing the key
  * 3. OMNI_LLM_KEY_HELPER — shell command that prints the key
- * 4. llm_key field in ~/.config/omni/config.json
+ * 4. llm_key field in ~/.config/omni_md/config.json
  *
  * Returns undefined if none is set.
  */
